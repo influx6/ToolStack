@@ -504,60 +504,72 @@ var SU = (function(EM){
 		             return to;
 		      },
 
-		        isType: function(o){
-		            return ({}).toString.call(o).match(/\s([\w]+)/)[1].toLowerCase();
-		        },
+	        isType: function(o){
+	            return ({}).toString.call(o).match(/\s([\w]+)/)[1].toLowerCase();
+	        },
 
-		        matchType: function(obj,type){
-		            return ({}).toString.call(obj).match(/\s([\w]+)/)[1].toLowerCase() === type.toLowerCase();
-		        },
+	        matchType: function(obj,type){
+	            return ({}).toString.call(obj).match(/\s([\w]+)/)[1].toLowerCase() === type.toLowerCase();
+	        },
 
-		        isRegExp: function(expr){
-		           return this.matchType(expr,"regexp");
-		        },
+	        isRegExp: function(expr){
+	           return this.matchType(expr,"regexp");
+	        },
 
-		        isString: function(o){
-		           return this.matchType(o,"string");
-		        },
+	        isString: function(o){
+	           return this.matchType(o,"string");
+	        },
 
-		        isObject: function(o){
-		           return this.matchType(o,"object");
-		        },
+	        isObject: function(o){
+	           return this.matchType(o,"object");
+	        },
 
-		        isArray: function(o){
-		           return this.matchType(o,"array");
-		        },
+	        isArray: function(o){
+	           return this.matchType(o,"array");
+	        },
 
-              isDate: function(o){
+            isDate: function(o){
                 return this.matchType(o,"date");
-              },
+            },
 
-		        isFunction: function(o){
+		    isFunction: function(o){
 		           return (this.matchType(o,"function") && (typeof o == "function"));
-		        },
+		    },
 
-		        isPrimitive: function(o){
+		    isPrimitive: function(o){
 		           if(!this.isObject(o) && !this.isFunction(o) && !this.isArray(o) && !this.isUndefined(o) && !this.isNull(o)) return true;
 		           return false;
-		        },
+		    },
 
-		        isUndefined: function(o){
+		    isUndefined: function(o){
 		           return (o === undefined && this.matchType(o,'undefined'));
-		        },
+		    },
 
-		        isNull: function(o){
+		    isNull: function(o){
 		           return (o === null && this.matchType(o,'null'));
-		        },
+		    },
 
-		        isNumber: function(o){
+		    isNumber: function(o){
 		           return this.matchType(o,"number");
-		        },
+		    },
 
-		        isArgument: function(o){
+		    isArgument: function(o){
 		           return this.matchType(o,"arguments");
-		        },
+		    },
 
-		        has: function(obj,elem,value,fn){
+		    isFalse: function(o){
+		    	return (o === false);
+		    },
+
+		    isTrue: function(o){
+		    	return (o === true);
+		    },
+
+		    isBoolean: function(o){
+		    	return this.matchType(o,"boolean");
+		    },
+
+		    has: function(obj,elem,value,fn){
 		           var self = this,state = false;
 		           this.any(obj,elem,function(e,i){
 		              if(value){
@@ -575,9 +587,9 @@ var SU = (function(EM){
 		           });
 
 		           return state;
-		        },
+		    },
 
-		        hasOwn: function(obj,elem,value){
+		    hasOwn: function(obj,elem,value){
 		           if(Object.hasOwnProperty){
 		              //return Object.hasOwnProperty.call(obj,elem);
 		           }

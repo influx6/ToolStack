@@ -196,11 +196,14 @@ var Promise = (function(EM){
 
         
 
-         if(fn){
-            if(su.isNull(fn) || su.isUndefined(fn)){
-               deffered.reject();
-               return deffered;
-            }
+        if(su.isNull(fn) || su.isFalse(fn)){
+           deferred.reject(fn);
+           return deferred;
+        };
+
+        if(fn){
+
+            //if(su.isTrue(fn)){ deferred.resolve(); return deferred; }
 
             if(su.isObject(fn) && this.isPromise(fn)){
                handler = fn.promise;
@@ -261,6 +264,7 @@ var Promise = (function(EM){
                         },function(){
                            newDiffered.reject(arguments);
                         },function(){
+                            console.log(arguments);
                            //set here cause we can call notify as manytimes
                            //as possible
                            resValues[i] = arguments.length === 1 ? arguments[0] : su.arranize(arguments);
@@ -269,16 +273,20 @@ var Promise = (function(EM){
                         procCount--;
                      }
                      
+                     console.log(procCount);
 
                  },function(e,i){
                      var args = su.flatten(resValues);
                      console.log(args);
-                     if(!procCount){ newDiffered.resolveWith(newDiffered,args);}
-                     else{ newDiffered.resolveWith(newDiffered,lists); }
-                 });
+                     args.length === 0 ? (args = lists) : args;
 
-                while(!(--count <= -1)){
+                     if(!procCount) newDiffered.resolveWith(newDiffered,args);
+                 });
+                
+
+                while(!(count <= -1)){
                   iterator.next();
+                  count--;
                 }
 
             return promise;
