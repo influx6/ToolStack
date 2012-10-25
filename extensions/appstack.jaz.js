@@ -1,22 +1,15 @@
 var Jaz = (function(EM){
 
-   EM.create("Jaz", function(){
-
-      //first setup extensions
-      var extensions = {},
-          extmgr = globals.extmgr(extensions);
-        
-         //execute the extenions
-         globals.su(extmgr);
+   EM.create("Jaz", function(SU,ASColor){
 
       //main functions 
-     var _su = extensions.SU,
+     var _su = SU,
+         asc = ASColor,
          Time = Date,
          newline = "\n",
          tabline = "\t",
          spaceline = " ",
           //ascii colors range from 30 t0 36,where 30 is black
-         asc = globals.asc,
          Failed = _su.makeString("",asc.extra.boldOn , asc.fg.red ,"Failed!", asc.reset),
          Passed = _su.makeString("",asc.extra.boldOn , asc.fg.green ,"Passed!", asc.reset),
          clockIt = function(fn){
@@ -353,7 +346,7 @@ var Jaz = (function(EM){
          license: "mit",
       };
 
-   });
+   },["ToolChain","ASColor"]);
 
 });
 

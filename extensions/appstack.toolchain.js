@@ -1,6 +1,6 @@
-var SU = (function(EM){
+var ToolChain = (function(EM){
 	
-   EM.create("SU",(function(){
+   EM.create("ToolChain",(function(){
 	
             return {
 	
@@ -696,4 +696,4 @@ var SU = (function(EM){
 
 });
 
-if(module.exports) module.exports = SU;
+if(module.exports) module.exports = ToolChain;
