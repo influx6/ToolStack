@@ -1,7 +1,7 @@
 {
   "name": "Class",
   "version": "0.3.2",
-  "description": "simple,lightweight class structure library",
+  "description": "simple,lightweight mass of custom application utilities and libraries for the masses",
   "main": "appstack.js",
   "directories": {
     "example": "examples",

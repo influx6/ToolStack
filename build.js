@@ -11,15 +11,15 @@ var jsconcat = require("jsconcat").compile,
 		uglify: false
 	},
 	
-	Class = {
-		name: "Class.min.js",
+	appstack = {
+		name: "appstack.min.js",
 		src_dir: ".",
-		src:["src/Class.js"],
+		src:["src/appstack.js"],
 		build_dir: ".",
 		uglify: true
 	};
 	
 
 
-   jsconcat(Class);
+   jsconcat(appstack);
    jsconcat(extmgr);

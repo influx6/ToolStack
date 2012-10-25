@@ -41,7 +41,7 @@
          
          child.prototype = new empty();
          
-         child.prototype.constructor = child;
+         //child.prototype.constructor = child;
          child.parent = parent.prototype;
          
          parent.prototype.constructor = parent;
