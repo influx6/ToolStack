@@ -1,4 +1,4 @@
-var m = Stubs.create("M",{ 
+var m = AppStack.create("M",{ 
 	
 	init: function(name,classic){ 
 		this.name=name; 
@@ -17,7 +17,7 @@ var m = Stubs.create("M",{
 	}
 });
 
-var n  = Stubs.create("N", { 
+var n  = AppStack.create("N", { 
 	
 	init: function(s){ 
 		this.status = s;

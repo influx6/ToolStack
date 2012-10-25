@@ -1,10 +1,10 @@
-var m = Stubs.create("M",{ 
+var m = AppStack.create("M",{ 
 	init: function(s){ this.slap = s; },
 	slaps: function(){ return this.slap;}
 });
 
-//create a new object from through stub create method
-var n = Stubs.create("N",{ 
+//create a new object from through Class create method
+var n = AppStack.create("N",{ 
 	init:function(s,n){ this.n=n;}, 
 	wave: function(){ return this.n;}
 },m);
@@ -26,7 +26,7 @@ var s = n.extend("Sucker",{
 });
 
 //using the nice class-level to instance level properties in your classes
-var R = Stubs.create("R",{
+var R = AppStack.create("R",{
 	//class level methods r.Find
 	static:{
 		find: function(){ return "calling class-level find"; },
@@ -51,8 +51,8 @@ var test3 = new h("suckr",'locker');
 var test4 = new s("suckr",'locker','decker');
 
 
-//even Stubs is simple an object that allows you to create objects from itself
-var emptyStub = new Stubs();
+//even AppStack is simple an object that allows you to create objects from itself
+var emptyClass = new AppStack();
 
 // playing with R
 'find' in R; //will return true;

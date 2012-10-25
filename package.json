@@ -1,8 +1,8 @@
 {
-  "name": "stub",
+  "name": "Class",
   "version": "0.3.2",
   "description": "simple,lightweight class structure library",
-  "main": "./src/stub.js",
+  "main": "appstack.js",
   "directories": {
     "example": "examples",
     "test": "tests"
@@ -12,14 +12,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "http://github.com/influx6/Stub"
+    "url": "http://github.com/influx6/Class"
   },
   "keywords": [
     "class",
     "library",
     "class",
     "structure",
-    "stub"
+    "Class"
   ],
   "author": "Alexander Adeniyi Ewetumo",
   "license": "MIT",

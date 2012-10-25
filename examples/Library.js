@@ -1,6 +1,6 @@
-//a simple example class using Stub,a Simple library
+//a simple example class using Class,a Simple library
 
-var Catalogue = Stubs.create("Catalogue",{
+var Catalogue = AppStack.create("Catalogue",{
 	
 	init: function(){
 		this.catalogue={};
@@ -34,7 +34,7 @@ var Catalogue = Stubs.create("Catalogue",{
 	
 });
 
-var Library = Stubs.create("Library",{
+var Library = AppStack.create("Library",{
 	init: function(settings){
 		this.settings = settings;
 		this.bookLists=[];
