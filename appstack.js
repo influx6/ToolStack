@@ -69,16 +69,16 @@
             splen = space.length,
             index = 0,
             current = null,
-            adder = function(obj,space,fn){ 
-               if(!obj[space]) obj[space] = fn ? fn : {};
+            adder = function(obj,space){ 
+               if(!obj[space]) obj[space] = {};
+               obj[space]._parent = obj;
                return obj[space];
             };
 
-
          while(true){
             if(index >= splen){
-               if(fn) adder(self,space[index - 1],fn)
-               self = this; break;
+                self._parent[current] = fn;
+                break;
             };
             //we get the item,we add and move into lower levels
             current = space[index];
@@ -86,6 +86,7 @@
             index++;
          };
 
+         self = this;
          return self;
       };
 
