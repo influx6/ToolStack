@@ -1,10 +1,10 @@
 var Jaz = (function(EM){
 
-   EM.create("Jaz", function(SU,ASColor){
+   EM.create("Jaz", function(toolchain,ascolor){
 
       //main functions 
-     var _su = SU,
-         asc = ASColor,
+     var _su = toolchain,
+         asc = ascolor,
          Time = Date,
          newline = "\n",
          tabline = "\t",
@@ -337,6 +337,11 @@ var Jaz = (function(EM){
 
 
       return {
+         name: "AppStack.Jaz",
+         version: "1.0.0",
+         description: "simple lightweight tdd style testing framework",
+         licenses:[ { type: "mit", url: "http://mths.be/mit" }],
+         author: "Alexander Adeniyin Ewetumo", 
          suite: Suite,
          expects: Expects,
          asserts: Asserts,
