@@ -11,7 +11,13 @@
 
             var generateResponse = function(){},
                 logger = Logger("Martcher Assertions!"),
-                matchers = {};
+                matchers = {
+                     name: "AppStack.Jaz",
+                     version: "1.0.0",
+                     description: "simple lightweight tdd style testing framework",
+                     licenses:[ { type: "mit", url: "http://mths.be/mit" }],
+                     author: "Alexander Adeniyin Ewetumo",
+                };
                 matchers.item = null;
                 matchers.obj = function(item){
                    this.item = item; return this;

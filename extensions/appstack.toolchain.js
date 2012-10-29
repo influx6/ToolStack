@@ -165,7 +165,7 @@
 	           if(!("defineProperty" in Object) && Object.__defineGetter__ && Object.__defineSetter__){
 	              if(fns.get) obj.__defineGetter__(name,fns.get);
 	              if(fns.set) obj.__defineSetter__(name,fns.set);
-	              obj.defineProperty(name,properties);
+	              if(properties) obj.defineProperty(name,properties);
 
 	              return;
 	           }
@@ -653,7 +653,34 @@
 
 		        a.length = start;
 		        return a;
-		     }
+		     },
+
+		     namespaceGen : function(space,fn){
+		         var self = this,
+		            space = space.split('.'),
+		            splen = space.length,
+		            index = 0,
+		            current = null,
+		            adder = function(obj,space){ 
+		               if(!obj[space]) obj[space] = {};
+		               obj[space]._parent = obj;
+		               return obj[space];
+		            };
+
+		         while(true){
+		            if(index >= splen){
+		                self._parent[current] = fn;
+		                break;
+		            };
+		            //we get the item,we add and move into lower levels
+		            current = space[index];
+		            self = adder(self,current);
+		            index++;
+		         };
+
+		         self = this;
+		         return self;
+		    }
 	
 	};
 			
