@@ -44,7 +44,7 @@
          return self;
       };
 
-      AppStack.load = function(lib){
+      AppStack.load = function(name){
 
       };
 

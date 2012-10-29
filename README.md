@@ -8,6 +8,8 @@
 	- compatible with Nodejs
 	- easily extendable directly or through an ExtensionManager(https://github.com/influx6/ExtensionManager.js)
 	- comes with predefined,usable extensions(Callbacks,Events,Promise,Utility extensions).
+	- loadable extensions using the simple 'load' function (still awaiting implementation)
+	- register extensions with their locations to get instant dependency resolution(awaiting implementation)
 	
 		
 # Examples
