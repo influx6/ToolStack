@@ -1,4 +1,9 @@
-var ASColor = (function(EM){
+!function(name,func){
+	//check for specific module's systems else add it to the global
+	if(typeof define === "function") define(func)
+	else if(typeof module !== "undefined") module.exports = func;
+	else this[name] = func; 
+}("ASColor",function(EM){
 
 	EM.create("ASColor",function(){
 
@@ -51,5 +56,3 @@ var ASColor = (function(EM){
 		   }
 	});
 });
-
-if(module && module.exports) module.exports = ASColor;

@@ -1,7 +1,12 @@
-var Jaz = (function(EM){
+"use strict";
+!function(name,func){
+   //check for specific module's systems else add it to the global
+   if(typeof define === "function") define(func)
+   else if(typeof module !== "undefined") module.exports = func;
+   else this[name] = func; 
+}("Jaz",function(EM){
 
    EM.create("Jaz", function(toolchain,ascolor){
-
       //main functions 
      var _su = toolchain,
          asc = ascolor,
@@ -99,136 +104,7 @@ var Jaz = (function(EM){
                }
             }
          })(),
-         Asserts = (function(_scope){
-            if(!_scope) _scope = {desc : "Asserts"};
-
-            var wrapToString = function(code){ return ("'"+code+"'"); },
-                generateResponse = function(op,could,should,message,scope){
-                  if(_su.isString(could)) could = wrapToString(could);
-                  if(_su.isString(should)) should = wrapToString(should);
-                  if(_su.isDate(could)) could = could.getTime();
-                  if(_su.isDate(should)) should = should.getTime();
-
-                  var passed = _su.makeString(" ",asc.fg.margenta,"  - Assertion:",cres(op,asc.fg.cyan,asc.reset),
-                        asc.fg.margenta,"Status:",Passed, asc.fg.margenta,"From:",cres(scope.desc,asc.fg.white,asc.reset)),
-                      failed = _su.makeString(" ",asc.fg.margenta,"  - Assertion:",cres(op,asc.fg.cyan,asc.reset),
-                        asc.fg.margenta,"Status:",Failed,asc.fg.margenta,"From:",cres(scope.desc,asc.fg.cyan,asc.reset)),
-                      body = _su.makeString(" ","   ",asc.fg.green," + Checked:",asc.reset,"if",could,message,(should ? should : " "));
-                     
-                     return {
-                        pass: _su.makeString("\n",passed,body),
-                        fail: _su.makeString("\n",failed,body)
-                     }
-                },
-                Log = LoggerManager.assert,
-                AssertError = new Error("Assertion Error!"),
-                responseHandler = function(state,response){
-                     if(!state){ Log.log(response.fail); throw AssertError; return false; }
-                     Log.log(response.pass);
-                     return true;
-
-                };
-
-         var matchers = {}; matchers.item = null;
-            matchers.obj = function(item){
-               this.item = item; return this;
-            };
-            matchers.createMatcher = function(name,message,fn){
-                  var sandbox = this,scope = _scope,
-                     matcher = function(should){
-                        var res = fn.apply(sandbox,arguments),
-                            response = generateResponse(name,sandbox.item,should,message,scope);
-                        return (res ? responseHandler(true,response) : responseHandler(false,response));
-                     };
-                  
-                  if(name in this) return false;
-                  this[name] = matcher; return true;
-            };
-
-            matchers.createMatcher("toBe","is equal to",function(should){
-                  if(this.item !== should) return false;
-                  return true;
-            });
-
-            matchers.createMatcher("toBeNull","is null",function(){
-               _su.explode(arguments);
-               if(_su.isNull(this.item)) return true;
-               return false;
-            });
-
-            matchers.createMatcher("notToBe","is not equal to",function(should){
-               if(this.item !== should) return true;
-               return false;
-            });
-
-            return matchers;
-         }),
-         Expects = (function(){
-            var Console = LoggerManager.expect,
-                expectations = {},
-                rejections = {},
-                expectDetail = function(color,reset,type,i,message){
-                  return _su.makeString(" ",type,i,cres(message,color,reset));
-                };
-
-            return{
-
-               done: function(){
-                  _su.forEach(expectations,function(e,i){
-                     if(!e){
-                        Console.log(expectDetail(asc.fg.red,asc.reset,_su.makeString(" ",asc.fg.cyan,"  - Expectation:",asc.reset),
-                        i,"is still unfullfilled!"));
-                        return;
-                     }
-                        Console.log(expectDetail(asc.fg.green,asc.reset,_su.makeString(" ",asc.fg.cyan,"  - Expectation:",asc.reset),
-                        i,"is fullfilled!"));
-                        return;
-                  },this);
-                  _su.forEach(rejections,function(e,i){
-                     if(!e){
-                        Console.log(expectDetail(asc.fg.green,asc.reset,_su.makeString(" ",asc.fg.cyan,"  - Rejection:",asc.reset),
-                        i,"is rejected!"));
-                        return;
-                     }
-                        Console.log(expectDetail(asc.fg.red,asc.reset,_su.makeString(" ",asc.fg.cyan,"  - Rejection:",asc.reset),
-                        i,"is still unrejected!"));
-                        return;
-                  },this);
-
-                  _su.explode(expectations,rejections);
-
-               },
-
-               fulfill: function(e){
-                  if(e in expectations && !expectations[e]){
-                     expectations[e] = true;
-                  }
-                  return this;
-               },
-
-               reject: function(e){
-                  if(e in rejections && rejections[e]){
-                     rejections[e] = false;
-                  }
-                  return this;
-               },
-
-               agreeTo: function(e){
-                  if(e in expectations) return;
-                  expectations[e] = false;
-                  return this;
-               },
-
-               refuseTo: function(e){
-                  if(e in rejections) return;
-                  rejections[e] = true;
-                  return this;
-               },
-
-           };
-
-         }),
-
+ 
          Suite = (function(){
             var sig = "__suites__",
             SuiteManager  = {
@@ -320,7 +196,7 @@ var Jaz = (function(EM){
                //       asserts(this).obj(1).toBe(1);
                // });
                //
-               //});
+                  //});
                SuiteManager.add((function(){
                   var current = Suites();
                   current.title = title;
@@ -329,6 +205,7 @@ var Jaz = (function(EM){
                   return current;
                })());
 
+               return this;
             },
 
             run: _su.proxy(SuiteManager.run,SuiteManager),
@@ -342,17 +219,14 @@ var Jaz = (function(EM){
          description: "simple lightweight tdd style testing framework",
          licenses:[ { type: "mit", url: "http://mths.be/mit" }],
          author: "Alexander Adeniyin Ewetumo", 
-         suite: Suite,
+         suiteman: Suite,
          expects: Expects,
          asserts: Asserts,
          logger: Logger,
          logman: LoggerManager,
-         version: "0.1",
          license: "mit",
       };
 
    },["ToolChain","ASColor"]);
 
 });
-
-if(module && module.exports) module.exports = Jaz;

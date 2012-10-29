@@ -1,6 +1,12 @@
-var Events = (function(EM){
-   EM.create("Events", function(SU,Callbacks){
+"use strict";
+!function(name,func){
+  //check for specific module's systems else add it to the global
+  if(typeof define === "function") define(func)
+  else if(typeof module !== "undefined") module.exports = func;
+  else this[name] = func; 
+}("Events",function(EM){
 
+   EM.create("Events", function(SU,Callbacks){
 		return {
 			
          name: "AppStack.Events",
@@ -50,7 +56,5 @@ var Events = (function(EM){
       
    };
 
-	},["Callbacks","SU"],true);
+	},["ToolChain","Callbacks"],true);
 });
-
-if(module.exports) module.exports = Events;

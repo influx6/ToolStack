@@ -1,5 +1,12 @@
-var Class = (function(EM){
-	return EM.create("Class",function(){
+"use strict";
+!function(name,func){
+	//check for specific module's systems else add it to the global
+	if(typeof define === "function") define(func)
+	else if(typeof module !== "undefined") module.exports = func;
+	else this[name] = func; 
+
+}("Class",function(EM){
+	EM.create("Class",function(){
 
 		return {
 			name: "AppStack.Class",
@@ -66,3 +73,4 @@ var Class = (function(EM){
 
 	});
 });
+

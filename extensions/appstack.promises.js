@@ -1,6 +1,13 @@
-var Promise = (function(EM){
+"use strict";
+!function(name,func){
+  //check for specific module's systems else add it to the global
+  if(typeof define === "function") define(func)
+  else if(typeof module !== "undefined") module.exports = func;
+  else this[name] = func; 
+}("Promises",function(EM){
 
-   //promise is a state based execution object ,which performs specific calls
+   //promise is a state based execution callback system as detailed by the Promise/A Specifications
+   // ,which performs specific calls
    //depending on the result of its target or caller,you wrapp promises or call
    //them from within a object and call them properties depending on its
    //outcome
@@ -292,8 +299,6 @@ var Promise = (function(EM){
             return promise;
          },
       }
-   },["SU","Callbacks"],true);
+   },["ToolChain","Callbacks"],true);
 
 });
-
-if(module.exports) module.exports = Promise;

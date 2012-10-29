@@ -1,4 +1,9 @@
-var Callbacks = (function(EM){
+!function(name,func){
+  //check for specific module's systems else add it to the global
+  if(typeof define === "function") define(func)
+  else if(typeof module !== "undefined") module.exports = func;
+  else this[name] = func; 
+}("Callbacks",function(EM){
 
    //added September 10th 2012 - 7:58am
        //idea picked up from jquery source -- best idea ,very useful for a proper
@@ -254,9 +259,7 @@ var Callbacks = (function(EM){
         version: "0.3.0",
       };
 
-   },["SU",{'n':"m"}],true);
+   },["ToolChain"],true);
 
 
 });
-
-if(module.exports) module.exports = Callbacks;
