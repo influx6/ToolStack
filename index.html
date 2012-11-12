@@ -2,9 +2,35 @@
 	<head>
 		<link rel="stylesheet" type="text/css" href="./assets/css/reset.css" />
 		<link rel="stylesheet" type="text/css" href="./assets/css/main.css" />
-		<script type="text/javascript" src="./lib/env.js"></script>
-		<script type="text/javascript" src="./lib/jsloader.js"></script>
-		<script type="text/javascript" src="./lib/extensionmgr.js"></script>
+		<script type="text/javascript" src="./appstack.js"></script>
+		<script type="text/javascript" src="./lib/stackutils.js"></script>
+		<script type="text/javascript" >
+
+			AppStack.extmgr.use(StackUtils.Transport.simple);
+			AppStack.extmgr.create('Solu',{ 
+				name:'sdsd',
+				version:'1.0.0',
+				description:'sddsd',
+				licenses:[{type:'mit',url:'sd'}],
+				author:'ddsdsd',
+				dependencies: {
+					'appstack.toolchain': './extensions/appstack.toolchain.js',
+					'appstack.class': 'file:///Users/punchbox/Projects/Me/appstack/extensions/appstack.class.js'
+				}
+			}, 
+			function(){
+				console.log("testing");
+			});
+
+			StackUtils.COM.make('index.html',function success(o){ 
+				
+				console.log('success',o);
+			 },
+			 function error(o){ 
+				console.log('error',o);
+			}); 
+			
+		</script>
 	</head>
 	<body>
 		<div class="wrapper" id="top">

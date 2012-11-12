@@ -3,8 +3,8 @@
    if(typeof define === "function") define(func)
    else if(typeof module !== "undefined") module.exports = func;
    else this[name] = func; 
-}("AppStack",(function(){
-
+}("AppStack",(function(root){
+     
       var AppStack =  {};
 
       AppStack.ObjectClassName = "AppStack";
@@ -44,11 +44,59 @@
          return self;
       };
 
-      AppStack.load = function(name){
+      AppStack.extensions = {};
 
-      };
+      AppStack.extmgr = (function(){
 
-      AppStack.require = AppStack.load;
+         var   signature = "__extensions__",
+               validate_args = function(name,meta,fn){
+                  //tiny assertions to ensure we follow extensions rules
+                  if(!name || typeof name !== 'string') throw new Error("Please the first argument must be a string of the name of the extension")
+                  if(!meta || typeof meta !== 'object') throw new Error(" Please include a meta object that contains meta info(build,version,dependencies ..");
+                  if(!fn) throw new Error(" Please include a meta object that contains meta info(build,version,dependencies ..");
+
+                  //assertions of the meta objects for specific details
+                  //basic meta checks
+                  if(!meta.version || typeof meta.version !== 'string') throw new Error("Extension has no valid version information");
+                  if(!meta.author || typeof meta.author !== 'string') throw new Error("Extension has no valid author information");
+                  if(!meta.description || typeof meta.description !== 'string') throw new Error("Extension has no valid description information");
+
+                  //extra meta data checks
+                  if(!meta.licenses) throw new Error("Extension has no valid licenses information");
+                  if(meta.dependencies && typeof meta.dependencies !== 'object') throw new Error("Extension has no valid licenses information");
+               };
+
+
+            return {
+
+               _loader : null,
+
+               use: function(o){ if(o && o.get) this._loader = o; },
+
+               create: function(name,meta,fn){
+                  var self = this;
+                  //call validation of correctness of arguments passed
+                  validate_args(name,meta,fn);
+                  AppStack.extensions[name] = {
+                        __name__ : name,
+                        __meta__ : meta,
+                        __source__ : fn,
+                        __imports__ : (function(root){
+                           if(meta.dependencies){
+                              if(!root._loader) throw new Error("Please supply a dependency loader! \n simple supply it to AppStack.use to set it!");
+                              return root._loader.get(meta.dependencies);
+                           }
+                        })(self),
+                        signature: signature,
+                        init: function(){}
+                  };
+               },
+
+            };
+
+      })();
+
+      
 
       return AppStack;
   
