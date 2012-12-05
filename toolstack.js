@@ -19,7 +19,7 @@
           lib = __dirname+'/lib/';
 
 
-        ToolStack.load = function(module,fn){
+        ToolStack._lib = function(module,fn){
             var mtch,self = this,split = module.split('.'),
             mod = 'stack.'.concat(split.length === 1 ? split[0] : split[1]);
 
@@ -29,10 +29,23 @@
                 mtch = e.match(/(\w+)\W(\w+)/)[0];
                 if(mtch === mod){
                   require(lib.concat(e))(self);
-                  fn();
+                  if(fn) fn();
                 }
               });
             });
+        };
+
+        ToolStack.load = function(module,fn){
+            if(typeof module === 'string') ToolStack._lib(module,fn);
+            if(module instanceof Array){
+                var size = module.length,count = 1;
+                module.forEach(function(e,i,d){
+                  if(count >= size){ 
+                   ToolStack._lib(e,fn); return;
+                  }
+                  ToolStack._lib(e); count += 1;
+                });
+            }
         };
 
         module.exports = ToolStack;
