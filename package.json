@@ -1,34 +1,23 @@
 {
-  "name": "Class",
+  "name": "toolstack",
   "version": "0.3.2",
-  "description": "simple,lightweight mass of custom application utilities and libraries for the masses",
-  "main": "appstack.js",
-  "directories": {
-    "example": "examples",
-    "test": "tests"
-  },
+  "description": "simple,lightweight mass of utilities for the masses",
+  "main": "toolstack.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "http://github.com/influx6/Class"
+    "url": "http://github.com/influx6/ToolStack"
   },
   "keywords": [
     "class",
     "library",
-    "class",
+    "tools",
     "structure",
-    "Class"
+    "utilities"
   ],
+  "private":true,
   "author": "Alexander Adeniyi Ewetumo",
-  "license": "MIT",
-  "dependencies":{
-      "extensionmgr": ">= 0.1.0"
-  },
-  "directories":{
-      "lib":"./lib",
-      "src":"./src",
-      "extensions":"./extensions"
-  }
+  "license": "MIT"
 }
