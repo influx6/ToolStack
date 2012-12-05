@@ -1,8 +1,8 @@
 {
-  "name": "toolstack",
+  "name": "appstack",
   "version": "0.3.2",
   "description": "simple,lightweight mass of utilities for the masses",
-  "main": "toolstack.js",
+  "main": "appstack.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
