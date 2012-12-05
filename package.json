@@ -19,5 +19,8 @@
   ],
   "private":true,
   "author": "Alexander Adeniyi Ewetumo",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies":{
+    "colors":"@0.6.x"
+  }
 }

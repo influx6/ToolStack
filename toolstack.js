@@ -16,18 +16,21 @@
       if(typeof module !== 'undefined' && typeof require !== 'undefined'){
         // //simple comment what you dont want loaded or rather pass a custom object
         var fs = require('fs'),
-          lib = __dirname + '/lib/';
+          lib = __dirname+'/lib/';
 
 
-        ToolStack.load = function(module){
+        ToolStack.load = function(module,fn){
             var mtch,self = this,split = module.split('.'),
             mod = 'stack.'.concat(split.length === 1 ? split[0] : split[1]);
 
             fs.readdir(lib,function(err,item){
-              if(err) fn(err,null);
+              if(err) throw err;
               item.forEach(function(e,i,d){
                 mtch = e.match(/(\w+)\W(\w+)/)[0];
-                if(mtch === mod) require(lib.concat(e))(self);
+                if(mtch === mod){
+                  require(lib.concat(e))(self);
+                  fn();
+                }
               });
             });
         };
