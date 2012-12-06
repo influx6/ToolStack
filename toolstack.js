@@ -29,7 +29,7 @@
                 mtch = e.match(/(\w+)\W(\w+)/)[0];
                 if(mtch === mod){
                   require(lib.concat(e))(self);
-                  if(fn) fn();
+                  if(fn) fn(self);
                 }
               });
             });
