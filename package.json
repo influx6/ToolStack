@@ -1,0 +1,27 @@
+{
+  "name": "toolstack",
+  "version": "0.3.2",
+  "description": "simple,lightweight mass of utilities for the masses",
+  "main": "toolstack.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/influx6/ToolStack"
+  },
+  "keywords": [
+    "class",
+    "library",
+    "tools",
+    "structure",
+    "utilities"
+  ],
+  "private":true,
+  "author": "Alexander Adeniyi Ewetumo",
+  "license": "MIT",
+  "directories":{
+    "lib":"./lib",
+    "tests":"./tests"
+  }
+}
