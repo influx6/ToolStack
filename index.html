@@ -3,13 +3,24 @@
 		<link rel="stylesheet" type="text/css" href="./assets/css/reset.css" />
 		<link rel="stylesheet" type="text/css" href="./assets/css/main.css" />
 		<script type="text/javascript" src="./toolstack.js"></script>
+		<script type="text/javascript" src="./frameworks/loader.js"></script>
+		<script type="text/javascript">
+			module.exports.Loader(module.exports,function(global){
+				
+				var loader = global.Loader;
+				loader.registerDir('ext','./lib/');
+
+				loader.load('ext','stack.class.js')
+				.then(":same",'stack.callbacks.js')
+				.then(":same",'stack.logger.js').end();
+
+			});
+		</script>
 	</head>
 	<body>
 		<div class="wrapper" id="top">
 			<section id="logo_menu">
-
 				<h1><a href="/">AppStack!</a></h1>
-
 				<nav>
 				 	<ul>
 				 		<li><a href="#features">Features</a></li>
@@ -18,18 +29,8 @@
 				 		<li><a href="#about">About</a></li>
 				 	</ul>
 				</nav>
-
 				<h4><span><a href="http://github.com/influx6/AppStack">Fork@Github</a></span></h4>
-
 			</section>
-		</div>
-
-		<div class="wrapper" id="central">
-
-		</div>
-
-		<div class="wrapper" id="footer">
-
 		</div>
 	</body>
 </html>
