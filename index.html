@@ -1,10 +1,16 @@
 <html>
 	<head>
 		<script type="text/javascript" src="./toolstack.js"></script>
+		<script type="text/javascript" src="./extensions.js"></script>
 		<script type="text/javascript" src="./frameworks/loader.js"></script>
 		<script type="text/javascript">
-			module.exports.Loader(module.exports,function(global){
-				
+			var ext = module.exports;
+
+			//execute needed extensions
+
+			//startup 
+			ext.Loader(module.exports,function(global){
+
 				var loader = global.Loader;
 				loader.registerDir('ext','./lib/');
 				loader.registerDir('loadertests','./tests/loaders');

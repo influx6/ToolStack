@@ -1,0 +1,34 @@
+{
+	"name": "jsconcat",
+	
+   "version":"0.0.3",
+   
+   "main":"./jsconcat.js",
+
+	"description": "simple,lightweight concatenation script",
+	
+	"engine":{
+		"node":">= 0.4.0"
+	},
+	
+	"keyword":["concatenation","combinator","file compression","uglify compressor","js compressor","javascript file compressor"],
+	
+	"owners":{
+		"name":"Alex Ewetumo",
+		"email":"trinoxf@gmail.com"
+	},
+	
+	"licenses":{
+		"type":"MIT",
+      		"url": "http://mths.be/mit"
+	},
+	
+	"repository":{
+		"type":"git",
+		"url":"git://github.com/influx6/jsconcat.git"
+	},
+	
+	"Dependencies":{
+		"uglify" : "@1.2.x"
+	}
+}

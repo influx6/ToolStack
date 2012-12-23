@@ -5,10 +5,16 @@ var module = module || {};
 
 })('Loader',function(global,callback){
 
-	global.ToolStack.load(['ToolChain','Env','Callbacks','Promise'],function(ts){
 
-		var Loader = { dirs:{} },
-			utility = ts.ToolChain, Promise = ts.Promise;
+		var Loader = { dirs:{} },ts = global.ToolStack,utility,Promise;
+
+		//setup need extensions
+		global.ToolChain(ts); 
+		global.Callbacks(ts); 
+		global.Promise(ts); 
+		global.Env(ts);
+
+		utility = ts.ToolChain; Promise = ts.Promise;
 
 		Loader.static = {
 			env : ts.Env.detect(),
@@ -150,5 +156,4 @@ var module = module || {};
 	   		module.exports = ns;
 	   	}
 	
-	});
 });
