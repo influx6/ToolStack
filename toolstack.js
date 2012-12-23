@@ -92,7 +92,7 @@ var module = module || {};
             }
         };
 
-        module.exports = ToolStack;
+        // module.exports = ToolStack;
         
       };
 

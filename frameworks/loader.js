@@ -19,7 +19,7 @@ var module = module || {};
 		Loader.registerDir = function(title,location){
 			if(typeof title !== 'string' || typeof location !== 'string') return false;
 			if(this.dirs[title]) throw new Error("The title '"+title+"' is already assigned!");
-			this.dirs[title] = location;
+			this.dirs[title] = this.resolve(location,"");
 		};
 
 		Loader.checkStatus = function(title){
@@ -28,25 +28,51 @@ var module = module || {};
 			return false;
 		};
 
-		Loader.resolve = function(start,end){
-			var pile = (start.split(this.static.matchr)).concat(end.split(this.static.matchr));
-			utility.normalizeArray(pile);
-			return pile.join('/');
-		};
+
 
 		if(Loader.static.env === 'node'){
+			var path = require('path');
+
+			Loader.resolve = function(start,end){
+				// var pile = (start.split(this.static.matchr)).concat(end.split(this.static.matchr));
+				// utility.normalizeArray(pile);
+				// return pile.join('/');
+				return path.resolve(start,end);
+			};
 
 			Loader.transport = function(addr,callback){
-				return function(){
+				// return function(){
 					try{
 						callback(null,require(addr));
 					}catch(e){
 						callback(e,null);
 					}
-				}
+				// }
 			};
 
-		}else if(Loader.static.env === 'browser'){
+			Loader.processRequest = function(stacks,callback){
+				var self = this,memory = [];
+				utility.eachSync(stacks,function(e,i,o,fn){
+					self.transport(e,function(err,item){
+						if(err) throw err;
+						memory.push(item);
+						fn(false);
+					});
+				},function(){
+					console.log('called!');
+					if(callback) callback.apply(null,memory);
+				},this);
+			};
+
+		};
+
+		if(Loader.static.env === 'browser'){
+
+			Loader.resolve = function(start,end){
+				var pile = (start.split(this.static.matchr)).concat(end.split(this.static.matchr));
+				utility.normalizeArray(pile);
+				return pile.join('/');
+			};
 
 			Loader.transport = function(addr,callback,async,defer){
 				var script = document.createElement('script');
@@ -70,39 +96,53 @@ var module = module || {};
 			};
 
 			Loader.processRequest = function(stacks){
-				var series = Promise.create();
+				var self = this,series,scriptPromise;
+
+				scriptPromise = function(item){
+					return Promise.create(function(o){
+						var script = self.transport(item,function(err,source){
+						 	if(err) o.reject(new Error(source.src+" Resource not found!"));
+						 	o.resolve(source);
+						});
+						document.head.appendChild(script);
+					},true,false);
+				};
+
+				series = scriptPromise(stacks.shift());
+
 				utility.eachSync(stacks,function(e,i,o,fn){
-					console.log(e);
-					fn(false);
+					series.done(function(source){
+						series = scriptPromise(e);
+						fn(false);
+					});
 				},null,this);
+
 			};
-
-			Loader.load = function(title,file,_stack){
-				var self = this,loc = self.checkStatus(title),dir = self.resolve(loc,file)
-				,stack ,ext = {};
-
-				stack = (utility.isArray(_stack)) ? _stack : [];
-
-				stack.push([title,file,dir]);
-
-				stack.then = function(t,f){
-					var toc = (t === self.static.same) ? title : t;
-					self.load(toc,f,this);
-					return this;
-				}
-
-				stack.end = function(t,f){
-					if(t && f) stack.then(t,f);
-					delete stack.then; delete stack.end;
-					self.processRequest(stack);
-					return self;
-				}
-
-				return stack;
-			}
 
 		}
 
+		Loader.load = function(title,file,_stack){
+			var self = this,loc = self.checkStatus(title),dir = self.resolve(loc,file)
+			,stack ,ext = {};
+
+			stack = (utility.isArray(_stack)) ? _stack : [];
+
+			stack.push(dir);
+
+			stack.then = function(t,f){
+				var toc = (t === self.static.same) ? title : t;
+				self.load(toc,f,this);
+				return this;
+			}
+
+			stack.end = function(callback){
+				delete stack.then; delete stack.end;
+				self.processRequest(stack,callback);
+				return self;
+			}
+
+			return stack;
+		};
 
 		var ns = ts.ns('Loader',Loader,global);
 		if(callback) callback(global);
