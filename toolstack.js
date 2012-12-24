@@ -1,8 +1,7 @@
 var module = module || {};
 (function(name,fn){
   if(!module['exports']) module.exports = {};
-  module.exports[name] = fn(module.exports);
-  this[name] = module.exports[name];
+  module.exports[name] = fn(module.export);
 })('ToolStack',function(global){
      
       var ToolStack =  {},_each,lib = "./lib/";
@@ -15,6 +14,7 @@ var module = module || {};
               iterator(arr[i], i, arr);
           }
       };
+          
 
       ToolStack.ObjectClassName = "ToolStack";
 
@@ -63,4 +63,5 @@ var module = module || {};
       };
 
       return ToolStack;
+      
 });

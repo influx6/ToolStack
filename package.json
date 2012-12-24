@@ -20,8 +20,13 @@
   "private":true,
   "author": "Alexander Adeniyi Ewetumo",
   "license": "MIT",
+<<<<<<< HEAD
   "directories":{
     "lib":"./lib",
     "tests":"./tests"
+=======
+  "dependencies":{
+    "colors":"@0.6.x"
+>>>>>>> 50f6799c7e9280a98525cefd71d73355b6f76624
   }
 }

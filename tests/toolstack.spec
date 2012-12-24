@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 var ts = require('../builds/toolstack.full.js');
 ts.ExtInit(ts);
 ts = ts.ToolStack;
+=======
+require('../toolstack').load(['class','toolchain','callbacks','logger','env',
+	'cluster','fractures','events','promise','structures','matchers'],
+	function(ts){
+>>>>>>> 50f6799c7e9280a98525cefd71d73355b6f76624
 
 	var	assert = require('assert');
 		//test existence of standard loaded libs
@@ -19,6 +25,11 @@ ts = ts.ToolStack;
 
 		assert.equal(Boolean(ts.Cluster),false);
 		assert.equal(Boolean(ts.Fractures),false);
+<<<<<<< HEAD
 
 	
+=======
+	}
+);	
+>>>>>>> 50f6799c7e9280a98525cefd71d73355b6f76624
 
