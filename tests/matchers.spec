@@ -1,4 +1,6 @@
-require('../toolstack').load(['toolchain','env','ascolor','matchers'],function(ts){
+var ts = require('../builds/toolstack.full.js');
+ts.ExtInit(ts);
+ts = ts.ToolStack;
 
 	var matchers = ts.Matchers,
 		assert = require('assert');
@@ -10,5 +12,5 @@ require('../toolstack').load(['toolchain','env','ascolor','matchers'],function(t
 	//matchers(3).notToBe(3);
 	matchers('basic').isTypeOf('string');
 
-});
+
 

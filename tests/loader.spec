@@ -1,5 +1,6 @@
-var toolstack = require('../toolstack');
-require('../frameworks/loader').Loader(toolstack,function(g){ 
+var ts = require('../builds/toolstack.full.js');
+ts.ExtInit(ts);
+ts = ts.ToolStack;
 
 	var loader = g.Loader;
 	loader.registerDir('lib',__dirname.concat('/../lib/'));
@@ -13,4 +14,3 @@ require('../frameworks/loader').Loader(toolstack,function(g){
 	});
 
 
-});

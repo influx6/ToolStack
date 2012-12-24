@@ -1,4 +1,6 @@
-require('../toolstack').load(['ToolChain','Logger','Matchers'], function(ts){
+var ts = require('../builds/toolstack.full.js');
+ts.ExtInit(ts);
+ts = ts.ToolStack;
 	
 	var col = [1,2,3,4,5,6,7,8,9,10,30], col2= { 1: 'one', 2: 'two', 3: 'three'},
 	utility = ts.ToolChain;
@@ -32,4 +34,3 @@ require('../toolstack').load(['ToolChain','Logger','Matchers'], function(ts){
 		if(y > 11) return true;
 	});
 
-});

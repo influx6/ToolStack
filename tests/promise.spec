@@ -1,4 +1,6 @@
-require('../toolstack').load('Promise',function(ts){
+var ts = require('../builds/toolstack.full.js');
+ts.ExtInit(ts);
+ts = ts.ToolStack;
 
 	var promise = ts.Promise;
 
@@ -14,4 +16,3 @@ require('../toolstack').load('Promise',function(ts){
 		console.log("notifications:",arguments);
 	});
 
-});

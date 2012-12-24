@@ -1,2 +1,4 @@
 message = message.concat(from("Seattle State!"));
-console.log(message);
+
+if(!Console) Console = console;
+Console.log(message);

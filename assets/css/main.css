@@ -37,3 +37,38 @@
 .wrapper #footer{
 
 }
+
+.wrapper #console{
+	width: 50%;
+	height: 240px;
+	padding:0.5%;
+	overflow: hidden;
+
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	-o-box-sizing: border-box;
+}
+
+.wrapper #console h3{
+	font-family: "Bebas Neue","sans-serif";
+	font-weight: normal;
+	letter-spacing: 0.1em;
+	font-size: 1.0em;
+
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	-o-box-sizing: border-box;
+}
+
+.wrapper #console div#console-screen{
+	background: rgba(0,0,0,1);
+	font-size: 0.8em;
+	color: #fff;
+	font-weight: normal;
+}
+
+.wrapper #console div#console-screen span{
+	padding-right:5px;
+}

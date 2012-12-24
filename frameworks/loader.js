@@ -8,11 +8,13 @@ var module = module || {};
 
 		var Loader = { dirs:{} },ts = global.ToolStack,utility,Promise;
 
-		//setup need extensions
-		global.ToolChain(ts); 
-		global.Callbacks(ts); 
-		global.Promise(ts); 
-		global.Env(ts);
+		// //setup need extensions
+		// if(!ts['ToolChain'] && !ts['Callbacks'] && !ts['Promise'] && !ts['Env']){
+		// 	global.ToolChain(ts); 
+		// 	global.Callbacks(ts); 
+		// 	global.Promise(ts); 
+		// 	global.Env(ts);
+		// }
 
 		utility = ts.ToolChain; Promise = ts.Promise;
 
@@ -89,12 +91,12 @@ var module = module || {};
 	            script.src = addr;
 	            script.onload = script.onreadystatechange = function(){
 	              if(!script.readyState || script.readyState.match(/^completed$|^loaded$/ig)){
-	                (function(a){ callback(false,a); })(script)
+	                (function(a){ return callback(false,a); })(script)
 	                script.onload = script.onreadystatechange = null;
 	              }
 	            };
 	            script.onerror = function(){
-	                (function(a){ callback(true,a); })(script)
+	                (function(a){ return callback(true,a); })(script)
 	            	script.onerror = null;
 	            };
 
@@ -107,8 +109,8 @@ var module = module || {};
 				scriptPromise = function(item){
 					return Promise.create(function(o){
 						var script = self.transport(item,function(err,source){
-						 	if(err) o.reject(new Error(source.src+" Resource not found!"));
-						 	o.resolve(source);
+						 	if(err) return o.reject(new Error(source.src+" Resource not found!"));
+						 	return o.resolve(source);
 						});
 						document.head.appendChild(script);
 					},true,false);

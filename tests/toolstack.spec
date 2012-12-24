@@ -1,6 +1,6 @@
-require('../toolstack').load(['class','toolchain','callbacks','logger','env','ascolor',
-	'cluster','fractures','events','promise','structures','matchers'],
-	function(ts){
+var ts = require('../builds/toolstack.full.js');
+ts.ExtInit(ts);
+ts = ts.ToolStack;
 
 	var	assert = require('assert');
 		//test existence of standard loaded libs
@@ -20,6 +20,5 @@ require('../toolstack').load(['class','toolchain','callbacks','logger','env','as
 		assert.equal(Boolean(ts.Cluster),false);
 		assert.equal(Boolean(ts.Fractures),false);
 
-	}
-);	
+	
 

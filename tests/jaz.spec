@@ -1,4 +1,7 @@
-require('../toolstack').load(['Jaz','Matchers'], function(ts){
+var ts = require('../builds/toolstack.full.js');
+ts.ExtInit(ts);
+ts = ts.ToolStack;
+
 	
 	var jaz = ts.Jaz,
 		matcher = ts.Matchers.use,
@@ -27,4 +30,4 @@ require('../toolstack').load(['Jaz','Matchers'], function(ts){
 		j.run();
 
 
-});
+

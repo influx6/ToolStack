@@ -44,17 +44,30 @@ var _getRequireConfig = function(config){
 	return config;
 };
 
-var each = function(obj,callback,scope){
-    var attr;
+function objectProp(obj,isValue){
+	var attr, count = [];
+   	for(attr in obj){
+   		if(!isValue)count.push(attr);
+   		else count.push(obj[attr]);
+   	}
+   	return count;
+};
+
+var each = function(obj,callback,scope,completed){
+    var attr,count;
 	    
 	    if(_isType(obj,"array") ||  _isType(obj,"string")){
+	    	count = obj.length;
 	    	for(var i = 0; i < obj.length; i ++){
 	    		callback.call(scope,obj[i],obj,i);
+	    		if(--count === 0 && completed) completed.call(scope);
 	    	}
 	    }
 	    else {
+	    	count = objectProp(obj).length;
 	    	for(attr in obj){
 	    		callback.call(scope, attr,obj);
+	    		if(--count === 0 && completed) completed.call(scope);
 	    	}
 	    };	    
 	     
