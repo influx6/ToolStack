@@ -111,7 +111,7 @@ var module = module || {};
 
 				series = scriptPromise(stacks.shift());
 
-				utility.eachSync(stacks,function(e,f,o,cb){
+				utility.eachAsync(stacks,function(e,f,o,cb){
 					series.done(function(path){
 						series = scriptPromise(e);
 						cb(false);
@@ -129,8 +129,7 @@ var module = module || {};
 
 				cb = args[args.length - 1];
 				if(utility.isFunction(cb)){
-					delete args[args.length - 1];
-					args.length -= - 1;
+					args.pop();
 				}else cb = function(){};
 
 				// function scriptInsert(source){
