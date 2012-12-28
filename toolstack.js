@@ -5,7 +5,9 @@ var module = module || {};
 })('ToolStack',function(global){
      
       var ToolStack =  {},_each,lib = "./lib/";
-          
+      
+      ToolStack.extensionized = false;
+
       _each = function (arr, iterator) {
           if (arr.forEach) {
               return arr.forEach(iterator);

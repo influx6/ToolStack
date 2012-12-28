@@ -2,30 +2,6 @@
 	<head>
 		<script type="text/javascript" src="./builds/toolstack.full.js"></script>
 		<script type="text/javascript" src="./frameworks/loader.js"></script>
-		<script type="text/javascript">
-			var ext = module.exports, ts = ext.ToolStack;
-		    
-			//execute needed extensions
-			ext.ExtInit(ext);
-
-		    ext.ToolStack.Console.init('console');
-
-		    Console = ext.ToolStack.Console;
-
-			//startup 
-			ext.Loader(module.exports,function(global){
-
-				var loader = global.Loader;
-				loader.registerDir('loadertests','./tests/loaders');
-
-				loader.load('loadertests','one.js')
-				.then(":same",'two.js').then(':same','three.js').end();
-
-
-		    });
-
-
-		</script>
 		<link rel="stylesheet" type="text/css" href="./assets/css/reset.css" />
 		<link rel="stylesheet" type="text/css" href="./assets/css/main.css" />
 	</head>
@@ -48,4 +24,18 @@
 			</section>
 		</div>
 	</body>
+			<script type="text/javascript">
+			var ext = module.exports, ts = ext.ToolStack;
+			//execute needed extensions
+			ext.ExtInit(ext);
+		    ext.ToolStack.Console.init('console');
+		    Console = ext.ToolStack.Console;
+			//startup 
+			ext.Loader(module.exports,function(global){
+				var loader = global.Loader;
+				loader.script('./tests/loaders/one.js','./tests/loaders/two.js','./tests/loaders/three.js');
+		    });
+
+
+		</script>
 </html>
