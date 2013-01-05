@@ -1,14 +1,11 @@
-var module = module || {};
-(function(name,fn){
-  if(!module['exports']) module.exports = {};
-  module.exports[name] = fn;
+var module = module || { exports: {}};
 
-})('Loader',function(global,callback){
+(function(exports){
 
 
-		var Loader = { dirs:{} },ts = global.ToolStack,utility,Promise;
+		var Loader = { dirs:{} },ts = exports.ToolStack,utility,Promise;
 
-		utility = ts.ToolChain; Promise = ts.Promise;
+		utility = ts.Utility; Promise = ts.Promise;
 
 		Loader.static = {
 			env : ts.Env.detect(),
@@ -143,10 +140,6 @@ var module = module || {};
 
 		};
 
-		var ns = ts.ns('Loader',Loader,global);
-		if(callback) callback(global);
-	   	if(typeof module !== 'undefined' && typeof require !== 'undefined'){
-	   		module.exports = ns;
-	   	}
+		exports.Loader = Loader;
 	
-});
+})(module.exports);
