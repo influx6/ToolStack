@@ -63,6 +63,13 @@ ToolStack.Utility = {
         .replace(/"/g, '&quot;');
     },
 
+    fixJSCode: function(js){
+      return String(js)
+      .replace(/\/*([^/]+)\/\n/g, '')
+      .replace(/\n/g, '')
+      .replace(/ +/g, ' '); 
+    },
+
     fixPath: function(start,end){
         var matchr = /\/+/,pile;
         pile = (start.split(matchr)).concat(end.split(matchr));
@@ -2130,29 +2137,31 @@ ToolStack.Structures = {};
       struct.NodeList.prototype = {
           signature: nodelistsig,
           add: function(elem,node){
-            var n = struct.Node(elem,null,node), pr,nx;
-            if(!this.first){
-              this.first = this.last = n;
-              this.last.previous = this.first;
-              this.first.previous = this.last;
-              this.size +=1;
-              return true;
-            } 
-            if(!node){
-                pr = this.last.previous; nx = this.last.next;
-                n.previous = this.last;
-                n.next = nx;
-                this.last.next = n;
-                this.last = n;
+            try{
+              var n = struct.Node(elem,null,node), pr,nx;
+              if(!this.first){
+                this.first = this.last = n;
+                this.last.previous = this.first;
                 this.first.previous = this.last;
                 this.size +=1;
                 return true;
-            }else{
-              pr = node.previous; nx = node.next; nx.previous = n;
-              node.next = n; n.next = nx; n.previous = node;
-              this.size +=1;
-              return true;
-            }
+              } 
+              if(!node){
+                  pr = this.last.previous; nx = this.last.next;
+                  n.previous = this.last;
+                  n.next = nx;
+                  this.last.next = n;
+                  this.last = n;
+                  this.first.previous = this.last;
+                  this.size +=1;
+                  return true;
+              }else{
+                pr = node.previous; nx = node.next; nx.previous = n;
+                node.next = n; n.next = nx; n.previous = node;
+                this.size +=1;
+                return true;
+              }
+            }catch(e){ throw e; }
           },
 
           remove: function(elem,node){
@@ -2265,20 +2274,20 @@ ToolStack.Structures = {};
 			this._parent = Stack.current;
 		}
 };
-ToolStack.Middleware = function(keygrator,comparator,final){
+ToolStack.Middleware = function(keygrator,comparator,fCallback){
 
 	var util = ToolStack.Utility,
 	ds = ToolStack.Structures,
 	comparator = comparator,
-	keygrator = keygrator,
-	stack = new ds.NodeList();
+	keygrator = keygrator;
 
 
 	var handler = function(){
-		var args = util.arranize(arguments);
+		var stack = arguments[0];
+		var final = arguments[1];
+		var args = util.makeSplice(arguments,2,arguments.length);
 		var iterator = stack.getIterator();
 		var found = true;
-
 
 		function next(err){
 
@@ -2311,7 +2320,6 @@ ToolStack.Middleware = function(keygrator,comparator,final){
 				}
 
 			}else{
-				console.log('getting',found);
 				if(!found && final && util.isFunction(final)) final.apply(null,args);
 			}
 
@@ -2325,34 +2333,35 @@ ToolStack.Middleware = function(keygrator,comparator,final){
 
 	//comparator returns true or false when decided if a middleware should be runned
 	//injector handles the injection of middleware into the stack;
-	return function(){
-		return{
-			stack: stack,
-			use: function(key,fn){
-				if(util.isFunction(key)){
-					fn = key;
-					key = keygrator();
-				}
-				else if(key && util.isFunction(fn)){
-					key = keygrator(key);
-				}
-				else if(util.isObject(key)){
-					if(!key['key'] || (!key['middleware'] || !util.isFunction(key['middleware']))) return;
-					var middleware = key.middleware;
-					middleware.key = key.key;
-					fn = middleware;
-					key = keygragtor(key.key);
-				};
+	return function(finalCallback){
+		var app = {};
+			app.finalCallback = finalCallback || fCallback;
+			app.stack = new ds.NodeList();
+			app.use = function(key,fn){
+					if(util.isFunction(key)){
+						fn = key;
+						key = keygrator();
+					}
+					else if(key && util.isFunction(fn)){
+						key = keygrator(key);
+					}
+					else if(util.isObject(key)){
+						if(!key['key'] || (!key['middleware'] || !util.isFunction(key['middleware']))) return;
+						var middleware = key.middleware;
+						middleware.key = key.key;
+						fn = middleware;
+						key = keygragtor(key.key);
+					};
 
-				stack.append({ key: key, middleware: fn});
-			},
+					this.stack.append({ key: key, middleware: fn});
+			}; 
+			app.start = function(){
+					var args = util.arranize(arguments);
+					handler.apply(this,[app.stack,app.finalCallback].concat(args));
+			};
 
-			start: function(){
-				var args = util.arranize(arguments);
-				handler.apply(this,args);
-			}
+			return app;
 
-		}
 	};
 
 };
