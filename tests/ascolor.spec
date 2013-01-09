@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 var ts = require('../builds/toolstack.full.js');
 ts.ExtInit(ts);
 ts = ts.ToolStack;
@@ -29,7 +28,6 @@ assert.equal(Boolean(sproto.italic),true);
 assert.equal(Boolean(sproto.underline),true);
 assert.equal(Boolean(sproto.inverse),true);
 
-=======
 require('../toolstack').load(['toolchain','env','ascolor'],function(ts){
 
 	//first pollute the global String object with color definitions;
@@ -59,4 +57,3 @@ require('../toolstack').load(['toolchain','env','ascolor'],function(ts){
 	assert.equal(Boolean(sproto.inverse),true);
 
 });
->>>>>>> 50f6799c7e9280a98525cefd71d73355b6f76624

@@ -1289,34 +1289,32 @@ ToolStack.Flux = (function(ToolStack){
 
 })(ToolStack);(function(ToolStack){
 
-	ToolStack.Console = {};
+	var Console = ToolStack.Console = {};
 	ToolStack.ASColors();
 
-	var initialized = false ,
-	env = ToolStack.Env.detect(),tree,parent,
-	Console = ToolStack.Console,util = ToolStack.Utility;
+	var initialized = false,util = ToolStack.Utility;
+	Console.initialized = false;
 
-Console.initialized = false;
+var node = function(extended){
 
-Console.init = function init(pid){
-	if(Console.initialized) return Console;
+		extended.initialized = true;
 
-	if(env === 'node'){
+		extended.out = console.log;
 
-		Console.initialized = true;
-
-		Console.log = function log(){
-			console.log.apply(console,arguments)
+		extended.log = function log(){
+			extended.out.apply(console,arguments)
 		};
 
-		Console.error = function error(){
-			console.error.apply(console,arguments)
+		extended.error = function error(){
+			extended.out.apply(console,arguments)
 		}
 
-		return Console;
-	}
+		return extended;
+};
 
-	if(env === 'browser'){
+var browser = function(extended,pid){
+
+		var tree,parent;
 
 		function makeWord(msg){
 			var item = document.createElement('span');
@@ -1327,7 +1325,7 @@ Console.init = function init(pid){
 		};
 
 
-		Console.initialized = true;
+		extended.initialized = true;
 
 		if(pid) parent = document.getElementById(pid);
 
@@ -1345,13 +1343,14 @@ Console.init = function init(pid){
 			tree.style.overflow = 'auto';
 		}
 
+		extended.out = util.proxy(tree.appendChild,tree);
 
-		Console.log = function log(msg){
-			tree.appendChild(makeWord("=>   ".green + msg));
+		extended.log = function log(msg){
+			extended.out(makeWord("=>   ".green + msg));
 		};
 
-		Console.error = function error(msg){
-			tree.appendChild(makeWord("=>   ".red + msg));
+		extended.error = function error(msg){
+			exteded.out(makeWord("=>   ".red + msg));
 		}
 
 		if(!parent) document.body.appendChild(tree);
@@ -1365,11 +1364,31 @@ Console.init = function init(pid){
 		// 	}
 		// },0);
 
-		return Console;
+		return extended;
+};
 
+var auto = function(extended,pid){
+	var envi = ToolStack.Env.detect();
+	if(envi === 'node') return node(extended);
+	if(envi === 'browser') return browser(extended,pid);
+}
+
+Console.init = function init(pid,env){
+	if(Console.initialized) return Console;
+
+	if(!env) return auto(Console,pid);
+
+	if(env){
+		if(env === 'node') return node(extended);
+		if(env === 'web' || env === 'browser') return browser(extended,pid);
 	}
 
 };
+
+Console.pipe = function(o,method){
+	Console.out = util.proxy(o[method || 'out'],o);
+	return Console;
+}
 
 })(ToolStack);ToolStack.Callbacks = (function(SU){
 
@@ -1970,9 +1989,11 @@ ToolStack.Matchers = (function(ToolStack){
                  author: "Alexander Adeniyin Ewetumo",
             };
 
+            matchers.scope = null;
             matchers.item = null;
 
             matchers.obj = function(item){
+              if(!item) throw new Error("Please supply an item to test against!");
                this.item = item; return this;
             };
 
@@ -2009,23 +2030,16 @@ ToolStack.Matchers = (function(ToolStack){
                return false;
             });
 
-            matchers.createMatcher("isTypeOf","is of type ",function(should){
+            matchers.createMatcher("isTypeOf","is of type",function(should){
                if(this.item !== should) return true;
                return false;
             });
              
-          var o = { 
-            use: function(item,scope){ 
-              if(!item) throw new Error('Please supply the item to match against');
-              matchers.scope = scope;
-              matchers.item = item; 
-              return matchers; 
-            }
+
+          return function Shell(scope){
+            matchers.scope = scope;
+            return matchers;
           };
-
-          o.createMatcher = util.proxy(matchers.createMatcher,matchers);
-
-          return o;
 
 })(ToolStack);ToolStack.Jaz = (function(toolstack){
 
@@ -2137,7 +2151,6 @@ ToolStack.Structures = {};
       struct.NodeList.prototype = {
           signature: nodelistsig,
           add: function(elem,node){
-            try{
               var n = struct.Node(elem,null,node), pr,nx;
               if(!this.first){
                 this.first = this.last = n;
@@ -2161,7 +2174,6 @@ ToolStack.Structures = {};
                 this.size +=1;
                 return true;
               }
-            }catch(e){ throw e; }
           },
 
           remove: function(elem,node){
@@ -2246,12 +2258,21 @@ ToolStack.Structures = {};
           return false;
         };
         this._iterator.next = function(){
-          if(this.current.next) this.current = this.current.next;
-          else this.current = null;
-          return this;
+          try{
+            if(this.current.next) this.current = this.current.next;
+            else this.current = null;
+            return this;
+          }catch(e){
+            return;
+          }
         };
         this._iterator.item = function(){
-          return this.current.elem;
+          try{
+            if(!this.current) return;
+            return this.current.elem;
+          }catch(e){
+            return;
+          }
         };
 
         return this._iterator;
@@ -2287,13 +2308,10 @@ ToolStack.Middleware = function(keygrator,comparator,fCallback){
 		var final = arguments[1];
 		var args = util.makeSplice(arguments,2,arguments.length);
 		var iterator = stack.getIterator();
-		var found = true;
+		var found = true, cursor = 0, set = null;
 
 		function next(err){
-
-
 			if(iterator.hasNext()){
-
 
 				try{
 
@@ -2301,29 +2319,33 @@ ToolStack.Middleware = function(keygrator,comparator,fCallback){
 					var state = comparator.apply(null,[step.key].concat(args));
 					var arity = step.middleware.length;
 
-
 					iterator.next();
 
 					if(err){ 
-						if(arity === 4) step.middleware.apply(null,([err].concat(args)).concat(next));
+						if(arity === 4) return step.middleware.apply(null,([err].concat(args)).concat(next));
 						else return next(err);
 					}else if(state && arity < 4){
+						found = true;
 						return step.middleware.apply(null,args.concat(next));
 					}else{
 						found = false;
+						next();
 					}
 
-					next();
 
 				}catch(e){
 					next(e);
 				}
 
 			}else{
-				if(!found && final && util.isFunction(final)) final.apply(null,args);
+				if(!found && final && util.isFunction(final)) return final.apply(null,args);
 			}
 
+			// set = stack[cursor++];
 
+			// if(!set){
+			// 	if(!found && final && util.isFunction(final)) return final.apply(null,args);
+			// }
 		}
 
 		next();
@@ -2351,6 +2373,8 @@ ToolStack.Middleware = function(keygrator,comparator,fCallback){
 						middleware.key = key.key;
 						fn = middleware;
 						key = keygragtor(key.key);
+					}else{
+						return;
 					};
 
 					this.stack.append({ key: key, middleware: fn});
