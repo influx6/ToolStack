@@ -70,6 +70,30 @@ ToolStack.Utility = {
       .replace(/ +/g, ' '); 
     },
 
+    processIt: function(o){
+      if(this.isNull(o)) return "null";
+      if(this.isUndefined(o)) return "Undefined";
+      if(this.isNumber(o)) return (""+o);
+      if(this.isString(o)) return o;
+      if(this.isArray(o)) return "["+o.join(',')+"]";
+      if(this.isFunction(o) || this.isObject(o)) return (o.name ? o.name : this.isType(o));
+      return o;
+    },
+
+    templateIt: function(source,keys){
+      var src = source, sets;
+      if(!this.isObject(keys) && !this.isArray(keys) && !this.isString(keys)) sets = [keys];
+      else sets = keys;
+
+      this.forEach(sets,function(e,i,o){
+          var reggy = new RegExp("\\{"+(i)+"\\}");
+          src = src.replace(reggy,e);
+      });
+      
+      return src;
+    },
+
+
     fixPath: function(start,end){
         var matchr = /\/+/,pile;
         pile = (start.split(matchr)).concat(end.split(matchr));
@@ -601,11 +625,11 @@ ToolStack.Utility = {
     //refernce to any of the values of the old one,incase u dont want to
     //initialize a vairable for the to simple pass a {} or [] to the to arguments
     //it will be returned once finished eg var b = clone(a,{}); or b=clone(a,[]);
-    clone: function(from,type){
+    clone: function(from,to){
           var to = null;
           if(this.isArray(from)) to = [];
           if(this.isObject(from)) to = {};
-          if(type) to = type;
+          if(to) to = to;
 
           this.forEach(from,function cloner(e,i,b){
             if(this.isArray(e)){
@@ -1962,10 +1986,11 @@ ToolStack.Matchers = (function(ToolStack){
             },
 
             generateResponse = function(name,item,should,message,scope){
-            	var head  = makeString(" ","Matcher:".bold.blue,name.bold.yellow),
-                  checked = makeString(" "," if",item,message,should,"\n").white;
+            	var template = util.templateIt(message,should),
+                  head  = makeString(" ","Matcher:".bold.blue,name.bold.yellow),
+                  checked = makeString(" "," if",item,template,"\n").white;
 
-            	  if(scope) head = head.concat(makeString(" "," From:".bold.blue,scope));
+            	  if(scope) head = head.concat(makeString(" ","  From:".bold.blue,scope.grey));
                 var success = head.concat(makeString(" ","    Status:".bold.blue,"Passed!".bold.green,"\n","\t","Checked:".magenta)),
                 failed = head.concat(makeString(" ","    Status:".bold.blue,"Failed!".bold.red,"\n","\t","Checked:".magenta));
 
@@ -2002,11 +2027,13 @@ ToolStack.Matchers = (function(ToolStack){
                 if(!message || typeof message !== 'string') throw new Error("Please provide a message for the matcher");
                 if(!fn || typeof fn !== 'function') throw new Error("Please provide function for the matcher");
 
-                  var sandbox = this,
-                      desc = (!sandbox.scope ? '' : ((typeof sandbox.scope === 'string') ? sandbox.scope : sandbox.scope.desc)),
-                      matcher = function(should){
-                          var res = fn.apply(sandbox,arguments),
-                              response = generateResponse(name,sandbox.item,should,message,desc);
+
+                  var sandbox = matchers,
+                      matcher = function(){
+                          var should = util.arranize(arguments);
+                          var desc = (util.isString(sandbox.scope) ? sandbox.scope : (util.isObject(sandbox.scope) ? sandbox.scope.desc : ''));
+                          var res = fn.apply(sandbox,should),
+                              response = generateResponse(name,util.processIt(sandbox.item),should,message,desc);
                           return (res ? responseHandler(true,response) : responseHandler(false,response));
                       };
                 
@@ -2020,8 +2047,8 @@ ToolStack.Matchers = (function(ToolStack){
             });
 
             matchers.createMatcher("toBeNull","is null",function(){
-               _su.explode(arguments);
-               if(_su.isNull(this.item)) return true;
+               util.explode(arguments);
+               if(util.isNull(this.item)) return true;
                return false;
             });
 
@@ -2035,6 +2062,25 @@ ToolStack.Matchers = (function(ToolStack){
                return false;
             });
              
+            matchers.createMatcher("isValid","is a valid object",function(should){
+                if(!util.isNull(this.item) && !util.isUndefined(this.item)) return true;
+                return false;
+            });
+
+            matchers.createMatcher("isInstanceOf","is a instance of {0}",function(should){
+               if(this.item !== should) return true;
+               return false;
+            });
+
+            matchers.createMatcher('hasKey',' has property '+"{0}".red,function(key){
+                if(this.item[key]) return true;
+                return false;
+            });
+
+            matchers.createMatcher('hasKeyForm','has property '+ "{0}".red +' of type '.white+ "{1}".red,function(key,form){
+                if(util.matchType(this.item[key],form)) return true;
+                return false;
+            });
 
           return function Shell(scope){
             matchers.scope = scope;
@@ -2078,7 +2124,7 @@ ToolStack.Matchers = (function(ToolStack){
                      },
                     run: function(){
                         //handle and run all the specs 
-                        Console.log("Info:".green +" Running Jaz Suite: ".grey + this.title.yellow);
+                        Console.log("Info:".green +" Running Jaz Suite: ".grey + this.title.magenta +"\n");
                         var self = this,
                             it = _su.eachAsync(this.specs,function(e,i,b,fn){
                                //make a clean scope
@@ -2094,8 +2140,8 @@ ToolStack.Matchers = (function(ToolStack){
                               }
                               fn(false);
                         },function(e,i,b){
-                              var message = _su.makeString("   ",("Total Passed:".bold.magenta + (" "+self.passed).bold.green),
-                                 ("Total Failed:".bold.magenta + (" "+ self.failed).bold.red), ("Total Test:".bold.magenta + (" "+self.total).bold.yellow) + "\n");
+                              var message = _su.makeString("   ",("Total Passed:".bold.grey + (" "+self.passed).bold.green),
+                                 ("Total Failed:".bold.grey + (" "+ self.failed).bold.red), ("Total Runned:".bold.grey + (" "+self.total).bold.yellow) + "\n");
                               Console.log(message);
                         },self);
 
@@ -2122,7 +2168,7 @@ ToolStack.Matchers = (function(ToolStack){
 
                  Console.init('console');
 
-                 var current = Suite();
+                 var current = _su.clone(Suite,{});
                  current.title = title;
                  //run the func to prepare the suite 
                  func.call(current);
@@ -2304,13 +2350,13 @@ ToolStack.Middleware = function(keygrator,comparator,fCallback){
 
 
 	var handler = function(){
-		var stack = arguments[0];
-		var final = arguments[1];
-		var args = util.makeSplice(arguments,2,arguments.length);
-		var iterator = stack.getIterator();
-		var found = true, cursor = 0, set = null;
+		var stack = arguments[0],
+		final = arguments[1],
+		args = util.makeSplice(arguments,2,arguments.length),
+		iterator = stack.getIterator();
 
 		function next(err){
+
 			if(iterator.hasNext()){
 
 				try{
@@ -2322,30 +2368,29 @@ ToolStack.Middleware = function(keygrator,comparator,fCallback){
 					iterator.next();
 
 					if(err){ 
-						if(arity === 4) return step.middleware.apply(null,([err].concat(args)).concat(next));
-						else return next(err);
+						if(arity === 4){
+							return step.middleware.apply(null,([err].concat(args)).concat(next));
+						}
+						else{
+							return next(err);
+						}
 					}else if(state && arity < 4){
-						found = true;
 						return step.middleware.apply(null,args.concat(next));
-					}else{
-						found = false;
-						next();
 					}
 
+					next();
+					
 
 				}catch(e){
 					next(e);
 				}
 
 			}else{
-				if(!found && final && util.isFunction(final)) return final.apply(null,args);
+				if(final && util.isFunction(final)){
+					return final.apply(null,[err].concat(args));
+				}
 			}
 
-			// set = stack[cursor++];
-
-			// if(!set){
-			// 	if(!found && final && util.isFunction(final)) return final.apply(null,args);
-			// }
 		}
 
 		next();

@@ -2,7 +2,7 @@
   "name": "toolstack",
   "version": "0.3.2",
   "description": "simple,lightweight mass of utilities for the masses",
-  "main": "toolstack.js",
+  "main": "./builds/toolstack.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -17,16 +17,10 @@
     "structure",
     "utilities"
   ],
-  "private":true,
   "author": "Alexander Adeniyi Ewetumo",
   "license": "MIT",
-
   "directories":{
     "lib":"./lib",
     "tests":"./tests"
-  },
-
-  "dependencies":{
-    "colors":"@0.6.x"
   }
 }
