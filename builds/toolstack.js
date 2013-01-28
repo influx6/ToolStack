@@ -734,47 +734,48 @@ ToolStack.Utility = {
     },
 
     hasOwn: function(obj,elem,value){
-     if(Object.hasOwnProperty){
-                  //return Object.hasOwnProperty.call(obj,elem);
-                }
+       if(Object.hasOwnProperty){
+              if(!value) return Object.hasOwnProperty.call(obj,elem);
+              else return (Object.hasOwnProperty.call(obj,elem) === value);
+        }
 
-                var keys,constroKeys,protoKeys,state = false,fn = function own(e,i){
-                  if(value){
-                   state = (e === value) ? true : false;
-                   return;
-                 }
-                 state = true;
-               };
+        var keys,constroKeys,protoKeys,state = false,fn = function own(e,i){
+          if(value){
+           state = (e === value) ? true : false;
+           return;
+         }
+         state = true;
+       };
 
-               if(!this.isFunction(obj)){
-                  /* when dealing pure instance objects(already instantiated
-                   * functions when the new keyword was used,all object literals
-                   * we only will be checking the object itself since its points to
-                   * its prototype against its constructors.prototype
-                   * constroKeys = this.keys(obj.constructor);
-                   */
+       if(!this.isFunction(obj)){
+          /* when dealing pure instance objects(already instantiated
+           * functions when the new keyword was used,all object literals
+           * we only will be checking the object itself since its points to
+           * its prototype against its constructors.prototype
+           * constroKeys = this.keys(obj.constructor);
+           */
 
-                   keys = this.keys(obj);
-                  //ensures we are not dealing with same object re-referening,if
-                  //so,switch to constructor.constructor call to get real parent
-                  protoKeys = this.keys(
-                   ((obj === obj.constructor.prototype) ? obj.constructor.constructor.prototype : obj.constructor.prototype)
-                   );
+           keys = this.keys(obj);
+          //ensures we are not dealing with same object re-referening,if
+          //so,switch to constructor.constructor call to get real parent
+          protoKeys = this.keys(
+           ((obj === obj.constructor.prototype) ? obj.constructor.constructor.prototype : obj.constructor.prototype)
+           );
 
-                  if(this.any(keys,elem,(value ? fn : null)) && !this.any(protoKeys,elem,(value ? fn : null))) 
-                    return state;
-                }
+          if(this.any(keys,elem,(value ? fn : null)) && !this.any(protoKeys,elem,(value ? fn : null))) 
+            return state;
+        }
 
-               /* when dealing with functions we are only going to be checking the
-               * object itself vs the objects.constructor ,where the
-               * objects.constructor points to its parent if there was any
-               */ 
-               //protoKeys = this.keys(obj.prototype);
-               keys = this.keys(obj);
-               constroKeys = this.keys(obj.constructor);
+       /* when dealing with functions we are only going to be checking the
+       * object itself vs the objects.constructor ,where the
+       * objects.constructor points to its parent if there was any
+       */ 
+       //protoKeys = this.keys(obj.prototype);
+       keys = this.keys(obj);
+       constroKeys = this.keys(obj.constructor);
 
-               if(this.any(keys,elem,(value ? fn : null)) && !this.any(constroKeys,elem,(value ? fn : null))) 
-                 return state;
+       if(this.any(keys,elem,(value ? fn : null)) && !this.any(constroKeys,elem,(value ? fn : null))) 
+         return state;
     },
 
     proxy: function(fn,scope){
@@ -2326,6 +2327,8 @@ ToolStack.Structures = {};
       struct.Stack = function(){
           var stack =  {
             list : struct.NodeList(),
+            pop: function(){},
+            shift: function(){},
           };
           
           return stack;
@@ -2435,3 +2438,112 @@ ToolStack.Middleware = function(keygrator,comparator,fCallback){
 
 };
 
+ToolStack.Helpers = (function Helpers(ts){
+
+	var util = ts.Utility,
+	validatorDefault = function(){ return true; },
+	helper = {};
+	helper.HashMaps = {
+		fetch: function(key){
+			if(!helper.HashMaps.exists.call(this,key)) return false;
+			return this[key];
+		},
+		exists: function(key,value){
+			if(!this[key] && !util.has(this,key)) return false;
+			if(value) return (this[key] === value)
+			return true;
+		},
+		remove: function(key,value){
+			if(helper.HashMaps.exists.call(this,key,value)) return (delete this[key]);
+		},
+		add: function(key,value,validator){
+			if(!validator) validator = validatorDefault;
+			if(helper.HashMaps.exists.call(this,key) || !validator(value)) return false;
+			this[key] = value;
+			return true;
+		},
+		modify: function(key,value,validator){
+			if(!helper.HashMaps.exists.call(this,key)) return false;
+			helper.HashMaps.add(key,value,validator)
+			return true;
+		}
+	};
+
+	return helper;
+})(ToolStack);ToolStack.MessageAPI = (function(ts){
+
+
+	var util = ts.Utility,
+	helper = ts.Helpers.HashMaps,
+	validator = function(value){
+		if(util.isFunction(value)) return true;
+		return false;
+	},
+	process = function(api){
+
+	},
+	domain = util.clone(helper,{}),
+	add = domain.add,
+	api = {};
+
+	domain.add = function(key,value){
+		return add.call(this,key,value,validator);
+	};
+
+	domain.modify = function(key,value){
+		return modify.call(this,key,value,validator);
+	};
+
+	// api.queue = [];
+	api.channels = {};
+	// api.processing = false;
+
+	// api.deliver = function(){
+	// 	if(this.processing) return;
+	// 	process(api);
+	// };
+
+	api.notify = function(channel,domain){
+		var channel = this.getChannel(channel),
+			domain = domain,
+			args = util.flatten(util.makeSplice(arguments,2,arguments.length));
+
+		if(!channel) return false;
+		return channel.fire(domain,args);
+	};
+
+	api.addChannel = function(key){
+		if(helper.exists.call(this.channels,key)) return false;
+
+		var channel = {
+			key:key, domains:{}
+		};
+
+		channel.fetch = util.proxy(domain.fetch,channel.domains);
+		channel.add = util.proxy(domain.add,channel.domains);
+		channel.remove = util.proxy(domain.remove,channel.domains);
+		channel.modify = util.proxy(domain.modify,channel.domains);
+		channel.fire = function(key,args){
+			if(!channel.fetch(key)) return false;
+			// var key = key, args = util.makeSplice(arguments,1,arguments.length);
+			// args = util.flatten(args);
+			return channel.fetch(key).apply(null,args);
+		};
+
+		return helper.add.call(this.channels,key,channel);
+	};
+
+	api.getChannel = function(key){
+		return helper.fetch.call(this.channels,key);
+	};
+
+	api.sandbox = function(){
+		return {
+			notify: util.proxy(api.notify,api),
+			getChannel: util.proxy(api.getChannel,api),
+		};
+	};
+
+	return function(){ return util.clone(api,{}); };
+
+})(ToolStack);	
