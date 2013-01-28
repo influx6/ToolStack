@@ -181,6 +181,15 @@ ToolStack.Utility = {
       }
     },
 
+    chain: function(o){
+      if(!this.isObject(o)) return;
+      var self = this,orig = o, chained = { implode: function(){ self.explode(this); } };
+      this.forEach(o,function(e,i,o){
+        if(this.has(orig,i) && this.isFunction(e) && !(i === 'implode')) chained[i] = function(){ orig[i].apply(orig,arguments); return chained; }
+      },this);
+      return chained;
+    },
+
     //takes a single supplied value and turns it into an array,if its an
     //object returns an array containing two subarrays of keys and values in
     //the return array,if a single variable,simple wraps it in an array,
@@ -552,7 +561,7 @@ ToolStack.Utility = {
           if(this.isObject(obj)) step = this.keys(obj).length;
 
           this.forEach(obj,function mover(x,i,o){
-            iterator(x,i,o,function innerMover(err){
+            iterator.call(scope,x,i,o,function innerMover(err){
                 if(err){
                   complete.call((scope || this),err);
                   return complete = function(){};
@@ -2479,11 +2488,28 @@ ToolStack.Helpers = (function Helpers(ts){
 		if(util.isFunction(value)) return true;
 		return false;
 	},
-	process = function(api){
+	// process = function(api){
+	// 	if(api.queue.length < 0) return false;
 
-	},
+	// 	console.log('calling');
+
+	// 	api.processing = true;
+
+	// 	util.eachAsync(api.queue,function(e,i,o,fn){
+	// 		var item = e;
+	// 		item.fn(item.channel,item.domain,item.args);
+	// 		o.shift();
+	// 		fn(false)
+	// 	},function(err){
+	// 		api.processing  = false;
+	// 		if(api.queue.length > 0) api.deliver();
+	// 	},api);
+
+	// 	return false;
+	// },
 	domain = util.clone(helper,{}),
 	add = domain.add,
+	modify = domain.modify,
 	api = {};
 
 	domain.add = function(key,value){
@@ -2496,11 +2522,13 @@ ToolStack.Helpers = (function Helpers(ts){
 
 	// api.queue = [];
 	api.channels = {};
-	// api.processing = false;
+	api.processing = false;
+	api.immediate = null;
 
 	// api.deliver = function(){
 	// 	if(this.processing) return;
-	// 	process(api);
+	// 	process(this);
+	// 	return this;
 	// };
 
 	api.notify = function(channel,domain){
@@ -2509,7 +2537,17 @@ ToolStack.Helpers = (function Helpers(ts){
 			args = util.flatten(util.makeSplice(arguments,2,arguments.length));
 
 		if(!channel) return false;
-		return channel.fire(domain,args);
+
+		if(this.immediate) channel.fire(domain,args);
+		else{
+			this.queue.push({ fn: function(channel,domain,args){
+				channel.fire(domain,args);
+			}, domain: domain, args: args, channel: channel });
+
+			// return this.deliver();
+		};
+		
+		return this;
 	};
 
 	api.addChannel = function(key){
@@ -2544,6 +2582,10 @@ ToolStack.Helpers = (function Helpers(ts){
 		};
 	};
 
-	return function(){ return util.clone(api,{}); };
+	return function(immediate){ 
+		var clone = util.clone(api,{});
+		clone.immediate = true;
+		return clone;
+	};
 
 })(ToolStack);	
