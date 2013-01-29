@@ -69,15 +69,18 @@ ToolStack.Utility = {
       .replace(/\n/g, '')
       .replace(/ +/g, ' '); 
     },
-
-    processIt: function(o){
+    clinse : function(o){
       if(this.isNull(o)) return "null";
       if(this.isUndefined(o)) return "Undefined";
       if(this.isNumber(o)) return (""+o);
       if(this.isString(o)) return o;
-      if(this.isArray(o)) return "["+o.join(',')+"]";
-      if(this.isFunction(o) || this.isObject(o)) return (o.name ? o.name : this.isType(o));
+      if(this.isBoolean(o)) return o.toString();
       return o;
+    },
+    processIt: function(o){
+      if(this.isArray(o)) return this.map(o,function(e){ return this.clinse(e); },this);
+      if(this.isFunction(o) || this.isObject(o)) return (o.name ? o.name : this.isType(o));
+      return this.clinse(o);
     },
 
     templateIt: function(source,keys){
@@ -1410,7 +1413,7 @@ var auto = function(extended,pid){
 Console.init = function init(pid,env){
 	if(Console.initialized) return Console;
 
-	if(!env) return auto(Console,pid);
+	if(!env || env === 'auto') return auto(Console,pid);
 
 	if(env){
 		if(env === 'node') return node(extended);
@@ -1994,7 +1997,6 @@ ToolStack.Matchers = (function(ToolStack){
               args = ([].splice.call(arguments,0));
               return args.splice(1,args.length).join(split);
             },
-
             generateResponse = function(name,item,should,message,scope){
             	var template = util.templateIt(message,should),
                   head  = makeString(" ","Matcher:".bold.blue,name.bold.yellow),
@@ -2028,8 +2030,10 @@ ToolStack.Matchers = (function(ToolStack){
             matchers.item = null;
 
             matchers.obj = function(item){
-              if(!item) throw new Error("Please supply an item to test against!");
-               this.item = item; return this;
+              if(util.isNull(item)) this.item = 'null';
+              else if(util.isUndefined(item)) this.item = 'undefined';
+              else this.item = item;
+              return this;
             };
 
             matchers.createMatcher = function(name,message,fn){
@@ -2043,7 +2047,7 @@ ToolStack.Matchers = (function(ToolStack){
                           var should = util.arranize(arguments);
                           var desc = (util.isString(sandbox.scope) ? sandbox.scope : (util.isObject(sandbox.scope) ? sandbox.scope.desc : ''));
                           var res = fn.apply(sandbox,should),
-                              response = generateResponse(name,util.processIt(sandbox.item),should,message,desc);
+                              response = generateResponse(name,util.processIt(sandbox.item),util.processIt(should),message,desc);
                           return (res ? responseHandler(true,response) : responseHandler(false,response));
                       };
                 
@@ -2051,7 +2055,7 @@ ToolStack.Matchers = (function(ToolStack){
                   this[name] = matcher; return true;
             };
 
-            matchers.createMatcher("toBe","is equal to",function(should){
+            matchers.createMatcher("toBe","is equal to {0}",function(should){
                   if(this.item !== should) return false;
                   return true;
             });
@@ -2062,12 +2066,12 @@ ToolStack.Matchers = (function(ToolStack){
                return false;
             });
 
-            matchers.createMatcher("notToBe","is not equal to",function(should){
+            matchers.createMatcher("notToBe","is not equal to {0}",function(should){
                if(this.item !== should) return true;
                return false;
             });
 
-            matchers.createMatcher("isTypeOf","is of type",function(should){
+            matchers.createMatcher("isTypeOf","is of type {0}",function(should){
                if(this.item !== should) return true;
                return false;
             });
@@ -2107,7 +2111,9 @@ ToolStack.Matchers = (function(ToolStack){
          Console = toolstack.Console,
          Time = Date,
          sig = "__suites__",
+         id = _su.guid(),
          Suite =  {
+                    guid : id,
                      signature: sig,
                      showDebug: false,
                      specs : [],
@@ -2184,7 +2190,22 @@ ToolStack.Matchers = (function(ToolStack){
                  func.call(current);
                  return current; 
 
-              }
+              },
+              createManager: function(){
+                var man = { 
+                    queue:[], 
+                    add: function(o){
+                        if(o.guid === id && (this.queue.indexOf(o) === -1)) this.queue.push(o);
+                    },
+                    run: function(){
+                        _su.forEach(this.queue,function(e,i,o){
+                            if(_su.isFunction(e)) return e.run();
+                        });
+                    }
+                };
+
+                return man;
+              },
         };
 
 
@@ -2539,13 +2560,13 @@ ToolStack.Helpers = (function Helpers(ts){
 		if(!channel) return false;
 
 		if(this.immediate) channel.fire(domain,args);
-		else{
-			this.queue.push({ fn: function(channel,domain,args){
-				channel.fire(domain,args);
-			}, domain: domain, args: args, channel: channel });
+		// else{
+		// 	this.queue.push({ fn: function(channel,domain,args){
+		// 		channel.fire(domain,args);
+		// 	}, domain: domain, args: args, channel: channel });
 
-			// return this.deliver();
-		};
+		// 	// return this.deliver();
+		// };
 		
 		return this;
 	};
