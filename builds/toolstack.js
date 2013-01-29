@@ -2145,7 +2145,7 @@ ToolStack.Matchers = (function(ToolStack){
                      },
                     run: function(){
                         //handle and run all the specs 
-                        Console.log("Info:".green +" Running Jaz Suite: ".grey + this.title.magenta +"\n");
+                        Console.log("Info:".green +" Running Jaz Suite '".grey + this.title.bold.green +"';\n");
                         var self = this,
                             it = _su.eachAsync(this.specs,function(e,i,b,fn){
                                //make a clean scope

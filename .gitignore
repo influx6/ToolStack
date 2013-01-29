@@ -1,7 +1,5 @@
-<<<<<<< HEAD
 .DS_Store
-=======
->>>>>>> 50f6799c7e9280a98525cefd71d73355b6f76624
+/builds
 /*.vim
 /*.swp
 *.swp
