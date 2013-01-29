@@ -2087,7 +2087,12 @@ ToolStack.Matchers = (function(ToolStack){
             });
 
             matchers.createMatcher('hasKey',' has property '+"{0}".red,function(key){
-                if(this.item[key]) return true;
+                if(util.has(this.item,key)) return true;
+                return false;
+            });
+
+            matchers.createMatcher('isTrue',' is '+"True".green,function(){
+                if(this.item === true) return true;
                 return false;
             });
 
@@ -2171,7 +2176,7 @@ ToolStack.Matchers = (function(ToolStack){
               licenses:[ { type: "mit", url: "http://mths.be/mit" }],
               author: "Alexander Adeniyin Ewetumo", 
               license: "mit", 
-              create: function(title,func){
+              create: function JazCreate(title,func){
                  //to create encapsulate specs 
                  // create("kicker tester",function(){
                  // variable definitions heres
@@ -2194,13 +2199,16 @@ ToolStack.Matchers = (function(ToolStack){
               createManager: function(){
                 var man = { 
                     queue:[], 
-                    add: function(o){
-                        if(o.guid === id && (this.queue.indexOf(o) === -1)) this.queue.push(o);
+                    add: function(title,func){
+                        this.queue.push(toolstack.Jaz.create(title,func));
                     },
                     run: function(){
                         _su.forEach(this.queue,function(e,i,o){
-                            if(_su.isFunction(e)) return e.run();
+                            if(_su.isObject(e)) return e.run();
                         });
+                    },
+                    flush: function(){
+                        return _su.exlode(this.queue);
                     }
                 };
 
