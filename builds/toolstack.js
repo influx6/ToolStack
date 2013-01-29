@@ -295,7 +295,8 @@ ToolStack.Utility = {
       },properties);
       return;
     },
-
+    
+    // destructive extends
     extends:function(){
            var obj = arguments[0];
            var args = Array.prototype.splice.call(arguments,1,arguments.length);
@@ -2096,6 +2097,16 @@ ToolStack.Matchers = (function(ToolStack){
                 return false;
             });
 
+            matchers.createMatcher('isEmpty',' is '+"Empty".red,function(){
+                if(util.isEmpty(this.item)) return true;
+                return false;
+            });
+
+            matchers.createMatcher('isFalse',' is '+"False".red,function(){
+                if(this.item === false) return true;
+                return false;
+            });
+
             matchers.createMatcher('hasKeyForm','has property '+ "{0}".red +' of type '.white+ "{1}".red,function(key,form){
                 if(util.matchType(this.item[key],form)) return true;
                 return false;
@@ -2145,7 +2156,7 @@ ToolStack.Matchers = (function(ToolStack){
                      },
                     run: function(){
                         //handle and run all the specs 
-                        Console.log("Info:".green +" Running Jaz Suite '".grey + this.title.bold.green +"';".grey+"\n");
+                        Console.log("Info:".green +" Running Jaz Suite '".grey.bold + this.title.bold.green +"';".grey+"\n");
                         var self = this,
                             it = _su.eachAsync(this.specs,function(e,i,b,fn){
                                //make a clean scope
