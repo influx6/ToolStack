@@ -9,5 +9,6 @@ js.compile({
 	'./lib/stack.class.js','./lib/stack.flux.js','./lib/stack.console.js',
 	'./lib/stack.callbacks.js','./lib/stack.events.js','./lib/stack.promise.js',
 	'./lib/stack.matchers.js','./lib/stack.jaz.js','./lib/stack.structures.js',
-	'./lib/stack.stalk.js','./lib/stack.middleware.js','./lib/stack.helpers.js','./lib/stack.messages.js']
+	'./lib/stack.stalk.js','./lib/stack.errors.js',
+	'./lib/stack.middleware.js','./lib/stack.helpers.js','./lib/stack.messages.js']
 });
