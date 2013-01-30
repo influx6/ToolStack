@@ -2025,9 +2025,11 @@ ToolStack.Matchers = (function(ToolStack){
                   // checked = makeString(" "," if",item,template,"\n").white;
 
             	  if(scope) head = head.concat(makeString(" ","  From:".bold.blue,scope.bold.yellow));
-                var success = head.concat(makeString(" ","  Status:".bold.blue,"Passed!".bold.green,"\n","\t","Checked:".magenta)),
-                failed = head.concat(makeString(" ","    Status:".bold.blue,"Failed!".bold.red,"\n","\t","Checked:".magenta));
+                var success = head.concat(makeString(" ","  Status:".bold.blue,"Passed!".bold.green,"\n","\t")),
+                failed = head.concat(makeString(" ","    Status:".bold.blue,"Failed!".bold.red,"\n","\t"));
 
+                // var success = head.concat(makeString(" ","  Status:".bold.blue,"Passed!".bold.green,"\n","\t","Checked:".magenta)),
+                // failed = head.concat(makeString(" ","    Status:".bold.blue,"Failed!".bold.red,"\n","\t","Checked:".magenta));
                 // success = success.concat(checked);
                 // failed = failed.concat(checked);
                   
