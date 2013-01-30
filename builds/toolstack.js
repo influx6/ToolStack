@@ -1666,7 +1666,28 @@ Console.pipe = function(o,method){
          };
 
 })(ToolStack.Utility);
-	ToolStack.Events = (function(ToolStack){
+	ToolStack.Errors = (function(){
+
+	var abstracterror = function AbstractError(name){
+		var e = function AbstractInstance(message){
+			Error.captureStackTrace.call(this,this);
+			this.message = message;
+		};
+		e.prototype = new Error;
+		e.prototype.name = name;
+		return e;
+	},
+	noop = function(){};
+
+	return {
+		DatabaseError : abstracterror('DatabaseError'),
+		MatcherError : abstracterror('MatcherError'),
+		createError: function(name){
+			return abstracterror(name);
+		}
+	};
+
+})();ToolStack.Events = (function(ToolStack){
 
 
       return function(){
@@ -1992,7 +2013,7 @@ ToolStack.Matchers = (function(ToolStack){
     
         var Console = ToolStack.Console,
         util = ToolStack.Utility,
-
+        matchError = ToolStack.Errors.MatcherError,
         makeString = function(split){
               var split = split || "",
               args = ([].splice.call(arguments,0));
@@ -2016,7 +2037,7 @@ ToolStack.Matchers = (function(ToolStack){
             responseHandler = function(state,response){
               if(!Console.log) Console.init('console');
               if(state) Console.log(response.pass);
-              else{ Console.log(response.fail); throw new Error(response.fail); }
+              else{ Console.log(response.fail); throw new matchError(response.fail); }
             },
 
             matchers = {
@@ -2056,16 +2077,16 @@ ToolStack.Matchers = (function(ToolStack){
                   this[name] = matcher; return true;
             };
 
-            matchers.createMatcher("toBe","is equal to {0}",function(should){
+            matchers.createMatcher("is","is equal to {0}",function(should){
                   if(this.item !== should) return false;
                   return true;
             });
 
-            matchers.createMatcher("is","is null",function(){
-               util.explode(arguments);
-               if(util.isNull(this.item)) return true;
-               return false;
-            });
+            // matchers.createMatcher("is","is null",function(){
+            //    util.explode(arguments);
+            //    if(util.isNull(this.item)) return true;
+            //    return false;
+            // });
 
             matchers.createMatcher("isNot","is not equal to {0}",function(should){
                if(this.item !== should) return true;
@@ -2125,6 +2146,7 @@ ToolStack.Matchers = (function(ToolStack){
       //main functions 
      var _su = toolstack.Utility,
          Console = toolstack.Console,
+         errors = toolstack.Errors,
          Time = Date,
          sig = "__suites__",
          id = _su.guid(),
@@ -2168,7 +2190,8 @@ ToolStack.Matchers = (function(ToolStack){
                                  if(self.after) self.after();
                                  self.passed += 1;
                               }catch(j){
-                                 self.failed += 1;
+                                 if(j instanceof errors.MatcherError) self.failed += 1;
+                                 else throw j;
                               }
                               fn(false);
                         },function(e,i,b){
@@ -2393,28 +2416,7 @@ ToolStack.Structures = {};
 			this._parent = Stack.current;
 		}
 };
-ToolStack.Errors = (function(){
-
-	var abstracterror = function AbstractError(name){
-		var e = function AbstractInstance(message){
-			Error.captureStackTrace.call(this,this);
-			this.message = message;
-		};
-		e.prototype = new Error;
-		e.prototype.name = name;
-		return e;
-	},
-	noop = function(){};
-
-	return {
-		DatabaseError : abstracterror('DatabaseError'),
-		MatcherError : abstracterror('MatcherError'),
-		createError: function(name){
-			return abstracterror(name);
-		}
-	};
-
-})();ToolStack.Middleware = function(keygrator,comparator,fCallback){
+ToolStack.Middleware = function(keygrator,comparator,fCallback){
 
 	var util = ToolStack.Utility,
 	ds = ToolStack.Structures,
