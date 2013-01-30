@@ -2101,7 +2101,7 @@ ToolStack.Matchers = (function(ToolStack){
             });
              
             matchers.createMatcher("isValid","is a valid object",function(should){
-                if(!util.isNull(this.item) && !util.isUndefined(this.item)) return true;
+                if(!util.isEmpty(this.item) && !util.isNull(this.item) && !util.isUndefined(this.item)) return true;
                 return false;
             });
 
