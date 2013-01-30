@@ -2077,7 +2077,7 @@ ToolStack.Matchers = (function(ToolStack){
                   this[name] = matcher; return true;
             };
 
-            matchers.createMatcher("is","is equal to {0}.green",function(should){
+            matchers.createMatcher("is","is equal to "+"{0}".green,function(should){
                   if(this.item !== should) return false;
                   return true;
             });
@@ -2088,12 +2088,12 @@ ToolStack.Matchers = (function(ToolStack){
             //    return false;
             // });
 
-            matchers.createMatcher("isNot","is not equal to {0}.red",function(should){
+            matchers.createMatcher("isNot","is not equal to "+"{0}".red,function(should){
                if(this.item !== should) return true;
                return false;
             });
 
-            matchers.createMatcher("isTypeOf","is of type {0}.magenta",function(should){
+            matchers.createMatcher("isTypeOf","is of type "+"{0}".magenta,function(should){
                if(this.item !== should) return true;
                return false;
             });
@@ -2103,7 +2103,7 @@ ToolStack.Matchers = (function(ToolStack){
                 return false;
             });
 
-            matchers.createMatcher("isInstanceOf","is a instance of {0}",function(should){
+            matchers.createMatcher("isInstanceOf","is a instance of "+"{0}".green,function(should){
                if(this.item !== should) return true;
                return false;
             });
