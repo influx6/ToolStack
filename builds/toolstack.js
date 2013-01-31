@@ -1669,8 +1669,8 @@ Console.pipe = function(o,method){
 	ToolStack.Errors = (function(){
 
 	var abstracterror = function AbstractError(name){
-		var e = function AbstractInstance(message){
-			Error.captureStackTrace.call(this,this);
+		var e = function AbstractInstance(message,constr){
+			Error.captureStackTrace.call(this,contr || this);
 			this.message = message;
 		};
 		e.prototype = new Error;
@@ -2624,6 +2624,7 @@ ToolStack.Helpers = (function Helpers(ts){
 
 		channel.fetch = util.proxy(domain.fetch,channel.domains);
 		channel.add = util.proxy(domain.add,channel.domains);
+		channel.exists = util.proxy(domain.exists,channel.domains);
 		channel.remove = util.proxy(domain.remove,channel.domains);
 		channel.modify = util.proxy(domain.modify,channel.domains);
 		channel.fire = function(key,args){
