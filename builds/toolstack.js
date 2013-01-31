@@ -1670,7 +1670,7 @@ Console.pipe = function(o,method){
 
 	var abstracterror = function AbstractError(name){
 		var e = function AbstractInstance(message,constr){
-			Error.captureStackTrace.call(this,constr || this);
+			Error.captureStackTrace(this,constr || this);
 			this.message = message;
 		};
 		e.prototype = new Error;
