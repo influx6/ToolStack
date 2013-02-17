@@ -1768,9 +1768,9 @@ Console.pipe = function(o,method){
       promise = function PromiseCreator(fn){
 
          var state = "pending",lists = {
-            done : callbacks.create("once unique forceContext"),
-            fail : callbacks.create("once unique forceContext"),
-            progress : callbacks.create("unique forceContext")
+            done : callbacks.create("once forceContext"),
+            fail : callbacks.create("once forceContext"),
+            progress : callbacks.create("forceContext")
          },
          deferred = {},
          memory = [[],[],[]],
@@ -1859,10 +1859,9 @@ Console.pipe = function(o,method){
                             if(returned && isPromise(returned) && !isp){ 
                               returned.promise().then(defer.resolve,defer.reject,defer.notify);
                               isp = true;
-                              return;
                             }
                             else{
-                              defer[state+"With"](defer,[returned]);
+                              defer[state+"With"](this === self ? defer : self,[returned]);
                             }
                           }
                         }
@@ -1931,7 +1930,7 @@ Console.pipe = function(o,method){
                   su.bind(function(){
                       this.resolveWith(this,args);
                   },deferred)();
-
+                  return;
                },
 
                reject: function(){
@@ -1940,7 +1939,7 @@ Console.pipe = function(o,method){
                   su.bind(function(){
                      this.rejectWith(this,args);
                   },deferred)();
-
+                  return;
                },
 
                delay: function(ms){
