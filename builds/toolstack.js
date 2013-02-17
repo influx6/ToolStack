@@ -2632,16 +2632,58 @@ ToolStack.Helpers = (function Helpers(ts){
 		return modify.call(this,key,value,validator);
 	};
 
-	// api.queue = [];
+	api.queue = [];
 	api.channels = {};
-	api.processing = false;
+	// api.up = false;
+	api.paused = false;
 	api.immediate = null;
+	api.clock = null;
+	api.pending = false;
+	api.tick = 500;
 
-	// api.deliver = function(){
-	// 	if(this.processing) return;
-	// 	process(this);
-	// 	return this;
-	// };
+	api.deliver = function(){
+		if(this.paused) return this.resume();
+		if(!this.pending) return this._manage();
+
+		var self = this; 
+		this.clock = util.delay(function(){
+			self._manage();
+			var item = self.queue.shift();
+			if(item) item.fn(item.channel,item.domain,item.args);
+			self.deliver();
+		},this.tick);
+	};
+
+	api.resume = function(){
+		if(!this.paused || !this.pending) return;
+		this.paused = false;
+		this.deliver();
+	};
+
+	api._manage = function(){
+		if(this.paused && this.clock){ clearTimeout(this.clock); delete this.clock; }
+		if(!this.queue.length){
+			this.pending = false; this.paused = false;
+			delete this.clock;
+		}
+		return;
+	};
+
+	api.pause = function(){
+		if(this.paused || !this.pending) return;
+		this.paused = true;
+		return this._manage();
+	};
+
+	api.flush = function(){
+		var self = this;
+		if(!this.paused) util.explode(this.queue);
+		else setTimeout(function(){
+			self.queue = [];
+		},0);
+		self.pending = false;
+		return;
+	}
 
 	api.notify = function(channel,domain){
 		var channel = this.getChannel(channel),
@@ -2651,13 +2693,12 @@ ToolStack.Helpers = (function Helpers(ts){
 		if(!channel) return false;
 
 		if(this.immediate) channel.fire(domain,args);
-		// else{
-		// 	this.queue.push({ fn: function(channel,domain,args){
-		// 		channel.fire(domain,args);
-		// 	}, domain: domain, args: args, channel: channel });
-
-		// 	// return this.deliver();
-		// };
+		else{
+			this.queue.push({ fn: function(channel,domain,args){
+				channel.fire(domain,args);
+			}, domain: domain, args: args, channel: channel });
+			if(!this.pending) this.pending = true;
+		};
 		
 		return this;
 	};
@@ -2695,9 +2736,10 @@ ToolStack.Helpers = (function Helpers(ts){
 		};
 	};
 
-	return function(immediate){ 
+	return function(immediate,timeout){ 
 		var clone = util.clone(api,{});
-		clone.immediate = true;
+		clone.immediate = util.isBoolean(immediate) ? immediate : true;
+		clone.tick = (util.isNumber(timeout) ? timeout : 500 );
 		return clone;
 	};
 
