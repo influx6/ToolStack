@@ -925,7 +925,8 @@ ToolStack.Utility = {
     },
 
   };
-ToolStack.Env =  {
+
+ToolStack.Utility.bind = ToolStack.Utility.proxy;ToolStack.Env =  {
          name: "ToolStack.Env",
          version: "1.0.0",
          description: "simple environment detection script",
@@ -1751,7 +1752,7 @@ Console.pipe = function(o,method){
 })(ToolStack);ToolStack.Promise = (function(SU,CU){
       var su = SU,
           callbacks = CU,
-          isPromise = function(e){
+          isPromise = function isPromise(e){
            //jquery style,check if it has a promise function
            //adding extra check for type of promise and if return type matches objects
            if(su.isObject(e) && "promise" in e){
@@ -1764,15 +1765,18 @@ Console.pipe = function(o,method){
 
               return false;
       },
-      promise = function(fn){
+      promise = function PromiseCreator(fn){
 
          var state = "pending",lists = {
-            done : callbacks.create("once forceContext"),
-            fail : callbacks.create("once forceContext"),
-            progress : callbacks.create("forceContext")
+            done : callbacks.create("once unique forceContext"),
+            fail : callbacks.create("once unique forceContext"),
+            progress : callbacks.create("unique forceContext")
          },
          deferred = {},
-         memory,
+         memory = [[],[],[]],
+         memorydone=memory[0],
+         memoryfail=memory[1],
+         memorynotify=memory[2],
          handler,
          isRejected = function(){
             if(state === "rejected" && lists.fail.fired()){
@@ -1792,6 +1796,8 @@ Console.pipe = function(o,method){
 
                __signature__: "promise",
 
+               __show: function(){ return lists; },
+
                state : function(){
                   return state;
                },
@@ -1801,7 +1807,7 @@ Console.pipe = function(o,method){
                   if(isResolved()){
                      su.forEach(su.arranize(arguments),function(e,i){
                         if(!su.isFunction(e)) return;
-                        e.apply(memory[0],memory[1]);
+                        e.apply(memorydone[0],memorydone[1]);
                      });
                      return this;
                   }
@@ -1814,7 +1820,7 @@ Console.pipe = function(o,method){
                   if(isRejected()){
                      su.forEach(su.arranize(arguments),function(e,i){
                         if(!su.isFunction(e)) return;
-                        e.apply(memory[0],memory[1]);
+                        e.apply(memoryfail[0],memoryfail[1]);
                      });
                      return this;
                   }
@@ -1827,7 +1833,7 @@ Console.pipe = function(o,method){
                   if(isRejected() || isResolved()){
                      su.forEach(su.arranize(arguments),function(e,i){
                         if(!su.isFunction(e)) return;
-                        e.apply(memory[0],memory[1]);
+                        e.apply(memorynotify[0],memorynotify[1]);
                      });
                      return this;
                   }
@@ -1836,16 +1842,45 @@ Console.pipe = function(o,method){
                },
 
 
-               then: function(success,fail,progress){
+               then: function(done,fail,progress){
+
+                  //returns a new promise which resolves with this promise
                   //adds multiple sets to the current promise/deffered being
                   //called;
-                  this.done(success).fail(fail).progress(progress);
-                  return this;
+
+                  var self = this,
+                      defer = ToolStack.Promise.create(),
+                      isp = false,
+                      stateHandler = function stateHandler(action,state,fn){
+                        return function(){
+                          if(!su.isFunction(fn)) return self[action](defer[state]); 
+                          else{
+                            var returned = fn.apply(this,arguments);
+                            if(returned && isPromise(returned) && !isp){ 
+                              returned.promise().then(defer.resolve,defer.reject,defer.notify);
+                              isp = true;
+                              return;
+                            }
+                            else{
+                              defer[state+"With"](defer,[returned]);
+                            }
+                          }
+                        }
+                      };
+
+                  self.done(stateHandler('done','resolve',done))
+                  .fail(stateHandler('fail','reject',fail))
+                  .progress(stateHandler('progress','notify',progress))
+                  //add the call back
+
+
+                  return defer.promise();
                },
 
                //return the value used to resolve,reject it
                get: function(){
-                  return memory[1];
+                  if(isResolved()) return memorydone[1];
+                  if(isRejected()) return memoryfail[1];
                },
 
                resolveWith: function(ctx,args){
@@ -1855,7 +1890,7 @@ Console.pipe = function(o,method){
                   lists.done.fireWith(ctx,args);
                   lists.progress.fireWith(ctx,args);
                   //store fired context and arguments for when callbacks are added after resolve/rejection
-                  memory = [ctx,args];
+                  memorydone = [ctx,args];
                   //disable fail list if resolved
                   lists.fail.disable();
                   //set state to resolve
@@ -1869,7 +1904,7 @@ Console.pipe = function(o,method){
                   lists.fail.fireWith(ctx,args);
                   lists.progress.fireWith(ctx,args);
                   //store fired context and arguments for when callbacks are added after resolve/rejection
-                  memory = [ctx,args];
+                  memoryfail = [ctx,args];
                   //disable done/success list;
                   lists.done.disable();
                   //set state to rejected
@@ -1878,27 +1913,34 @@ Console.pipe = function(o,method){
 
                notifyWith: function(ctx,args){
                  if(isRejected() || isResolved()) return this;
-                 memory = [ctx,args];
+                 memorynotify = [ctx,args];
                  lists.progress.fireWith(ctx,args);
                  return this;
                },
 
                notify: function(){
                   var args = su.arranize(arguments);
-                  this.notifyWith(this,args);
-                  return this;
+                  su.bind(function(){
+                    this.notifyWith(this,args);
+                  },deferred)();
                },
 
                resolve: function(){
                   var args = su.arranize(arguments);
-                  this.resolveWith(this,args);
-                  return this;
+                  //ensure it keeps the current context
+                  su.bind(function(){
+                      this.resolveWith(this,args);
+                  },deferred)();
+
                },
 
                reject: function(){
                   var args = su.arranize(arguments);
-                  this.rejectWith(this,args);
-                  return this;
+                  //ensure it keeps the current context
+                  su.bind(function(){
+                     this.rejectWith(this,args);
+                  },deferred)();
+
                },
 
                delay: function(ms){
@@ -1908,6 +1950,8 @@ Console.pipe = function(o,method){
                },
 
                promise: function(){
+                  if(this.__p) return this.__p;
+
                   var _p = {};
                   su.extends(_p,this);
                   delete _p.resolve;
@@ -1915,10 +1959,12 @@ Console.pipe = function(o,method){
                   delete _p.rejectWith;
                   delete _p.notifyWith;
                   delete _p.notify;
+
                   // delete _p.promise;
                   _p.promise = function(){ return this; };
                   delete _p.resolveWith;
 
+                  this.__p = _p;
                   return _p;
                }
 
@@ -1963,6 +2009,8 @@ Console.pipe = function(o,method){
             }
          }
 
+
+         
          return deferred;
       };
 
