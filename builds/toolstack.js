@@ -177,6 +177,15 @@ ToolStack.Utility = {
        };
     },
 
+    merge: function(a,b,explosive){
+      if(!this.isString(a) && !this.isString(b) && !this.isObject(a) && !this.isArray(a) && !this.isObject(b) && !this.isArray(b))
+      this.forEach(a,function(e,i,o){
+        if(b[i] === a[i] && !explosive) return;
+        b[i] = e;
+      });
+      return b;
+    },
+
     createChainable: function(fn){
        return function chainer(){
         fn.apply(this,arguments);
@@ -1949,8 +1958,6 @@ Console.pipe = function(o,method){
                },
 
                promise: function(){
-                  if(this.__p) return this.__p;
-
                   var _p = {};
                   su.extends(_p,this);
                   delete _p.resolve;
@@ -1963,7 +1970,6 @@ Console.pipe = function(o,method){
                   _p.promise = function(){ return this; };
                   delete _p.resolveWith;
 
-                  this.__p = _p;
                   return _p;
                }
 
@@ -2067,18 +2073,18 @@ ToolStack.Matchers = (function(ToolStack){
               return args.splice(1,args.length).join(split);
             },
             generateResponse = function(name,item,should,message,scope){
-            	var template = util.templateIt(message,should),
+              var template = util.templateIt(message,should),
                   head  = makeString(" ","Matcher:".bold.blue,name.bold.yellow);
-                  // checked = makeString(" "," if",item,template,"\n").white;
+                  checked = makeString(" "," if",item,template,"\n").white;
 
-            	  if(scope) head = head.concat(makeString(" ","  From:".bold.blue,scope.bold.yellow));
+                if(scope) head = head.concat(makeString(" ","  From:".bold.blue,scope.bold.yellow));
                 var success = head.concat(makeString(" ","  Status:".bold.blue,"Passed!".bold.green,"\n","\t")),
                 failed = head.concat(makeString(" ","    Status:".bold.blue,"Failed!".bold.red,"\n","\t"));
 
-                // var success = head.concat(makeString(" ","  Status:".bold.blue,"Passed!".bold.green,"\n","\t","Checked:".magenta)),
-                // failed = head.concat(makeString(" ","    Status:".bold.blue,"Failed!".bold.red,"\n","\t","Checked:".magenta));
-                // success = success.concat(checked);
-                // failed = failed.concat(checked);
+                var success = head.concat(makeString(" ","  Status:".bold.blue,"Passed!".bold.green,"\n","\t","Checked:".magenta)),
+                failed = head.concat(makeString(" ","    Status:".bold.blue,"Failed!".bold.red,"\n","\t","Checked:".magenta));
+                success = success.concat(checked);
+                failed = failed.concat(checked);
                   
                 return { pass: success, fail: failed };
             },
@@ -2136,6 +2142,11 @@ ToolStack.Matchers = (function(ToolStack){
             //    if(util.isNull(this.item)) return true;
             //    return false;
             // });
+            
+            matchers.createMatcher('indicate','operation indicated as'+"{0}".green,function(should){
+                if(should === true) return true;
+                return false;
+            });
 
             matchers.createMatcher("isNot","is not equal to "+"{0}".red,function(should){
                if(this.item !== should) return true;
@@ -2159,6 +2170,11 @@ ToolStack.Matchers = (function(ToolStack){
 
             matchers.createMatcher('hasKey',' has property '+"{0}".red,function(key){
                 if(util.has(this.item,key)) return true;
+                return false;
+            });
+
+            matchers.createMatcher('isTypeOf',' is type of '+"{0}".green,function(key){
+                if(util.matchType(this.item,key)) return true;
                 return false;
             });
 
@@ -2577,15 +2593,16 @@ ToolStack.Helpers = (function Helpers(ts){
 		remove: function(key,value){
 			if(helper.HashMaps.exists.call(this,key,value)) return (delete this[key]);
 		},
-		add: function(key,value,validator){
+		add: function(key,value,validator,force){
 			if(!validator) validator = validatorDefault;
 			if(helper.HashMaps.exists.call(this,key) || !validator(value)) return false;
 			this[key] = value;
 			return true;
 		},
 		modify: function(key,value,validator){
-			if(!helper.HashMaps.exists.call(this,key)) return false;
-			helper.HashMaps.add(key,value,validator)
+			if(!validator) validator = validatorDefault;
+			if(!helper.HashMaps.exists.call(this,key) || !validator(value)) return false;
+			this[key] = value;
 			return true;
 		}
 	};

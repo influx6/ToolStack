@@ -1,5 +1,5 @@
 {
-  "name": "ts",
+  "name": "tsk",
   "version": "0.3.2",
   "description": "simple,lightweight mass of utilities for the masses",
   "main": "./builds/toolstack.js",

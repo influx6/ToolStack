@@ -5,7 +5,7 @@ var matchers = ts.Matchers,
 assert.equal(typeof matchers, 'function');
 
 var basic = 'Basics Tests';
-matchers(basic).obj(1).toBe(1);
+matchers(basic).obj(1).is(1);
 //matchers(3).notToBe(3);
 matchers().obj('basic').isTypeOf('string');
 
