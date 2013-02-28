@@ -63,6 +63,10 @@ ToolStack.Utility = {
         .replace(/"/g, '&quot;');
     },
 
+    clinseString: function(source){
+      return String(source).replace(/"+/ig,'');
+    },
+
     fixJSCode: function(js){
       return String(js)
       .replace(/\/*([^/]+)\/\n/g, '')
@@ -178,7 +182,6 @@ ToolStack.Utility = {
     },
 
     merge: function(a,b,explosive){
-      if(!this.isString(a) && !this.isString(b) && !this.isObject(a) && !this.isArray(a) && !this.isObject(b) && !this.isArray(b))
       this.forEach(a,function(e,i,o){
         if(b[i] === a[i] && !explosive) return;
         b[i] = e;
@@ -2089,10 +2092,12 @@ ToolStack.Matchers = (function(ToolStack){
                 return { pass: success, fail: failed };
             },
 
-            responseHandler = function(state,response){
+            responseHandler = function(state,response,throwable){
               if(!Console.log) Console.init('console');
               if(state) Console.log(response.pass);
-              else{ Console.log(response.fail); throw new matchError(response.fail); }
+              else{ Console.log(response.fail); 
+                if(throwable) throw new matchError(response.fail); 
+              }
             },
 
             matchers = {
@@ -2105,6 +2110,12 @@ ToolStack.Matchers = (function(ToolStack){
 
             matchers.scope = null;
             matchers.item = null;
+            matchers.compliant = true;
+
+            matchers.scoped = function(scope){
+              this.scope = scope;
+              return this;
+            };
 
             matchers.obj = function(item){
               if(util.isNull(item)) this.item = 'null';
@@ -2125,7 +2136,7 @@ ToolStack.Matchers = (function(ToolStack){
                           var desc = (util.isString(sandbox.scope) ? sandbox.scope : (util.isObject(sandbox.scope) ? sandbox.scope.desc : ''));
                           var res = fn.apply(sandbox,should),
                               response = generateResponse(name,util.processIt(sandbox.item),util.processIt(should),message,desc);
-                          return (res ? responseHandler(true,response) : responseHandler(false,response));
+                          return (res ? responseHandler(true,response,sandbox.compliant) : responseHandler(false,response,sandbox.compliant));
                       };
                 
                   if(name in this) return false;
@@ -2193,15 +2204,17 @@ ToolStack.Matchers = (function(ToolStack){
                 return false;
             });
 
-            matchers.createMatcher('hasKeyForm','has property '+ "{0}".red +' of type '.white+ "{1}".red,function(key,form){
+            matchers.createMatcher('hasKeyForm','has property '+ "{0}".magenta +' of type '.white+ "{1}".green,function(key,form){
                 if(util.matchType(this.item[key],form)) return true;
                 return false;
             });
 
-          return function Shell(scope){
-            matchers.scope = scope;
+            matchers.createMatcher('hasKeyValue','has property '+ "{0}".magenta +' with value '.white+ "{1}".green,function(key,value){
+                if(this.item[key] === value) return true;
+                return false;
+            });
+
             return matchers;
-          };
 
 })(ToolStack);ToolStack.Jaz = (function(toolstack){
 
