@@ -121,6 +121,12 @@ ToolStack.Utility = {
           return v.toString(16); }).toUpperCase();
     },
 
+    revGuid: function(rev){
+        return ((rev && this.isNumber(rev) ? rev : '1')+'-xxyxyxyyyyxxxxxxyxyxxxyxxxyyyxxxxx').replace(/[xy]/g, function(c) {
+          var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+          return v.toString(16); });
+    },
+
     //use to match arrays to arrays to ensure values are equal to each other,
     //useStrict when set to true,ensures the size of properties of both
     //arrays are the same
@@ -181,13 +187,6 @@ ToolStack.Utility = {
        };
     },
 
-    merge: function(a,b,explosive){
-      this.forEach(a,function(e,i,o){
-        if(b[i] === a[i] && !explosive) return;
-        b[i] = e;
-      });
-      return b;
-    },
 
     createChainable: function(fn){
        return function chainer(){
@@ -209,13 +208,13 @@ ToolStack.Utility = {
     //object returns an array containing two subarrays of keys and values in
     //the return array,if a single variable,simple wraps it in an array,
     arranize: function(args){
-           if(this.isObject(args)){
-            return [this.keys(args),this.values(args)];
-          }
-          if(this.isArgument(args)){
-           return [].splice.call(args,0);
-         }
-         if(!this.isArray(args) && !this.isObject(args)){
+        if(this.isObject(args)){
+          return [this.keys(args),this.values(args)];
+        }
+        if(this.isArgument(args)){
+         return [].splice.call(args,0);
+        }
+        if(!this.isArray(args) && !this.isObject(args)){
           return [args];
         }
     },
@@ -249,18 +248,29 @@ ToolStack.Utility = {
           return message;
     },
 
-    isEmpty: function(o){
+    isEmptyString: function(o,ignorespace){
          if(this.isString(o)){
           if(o.length === 0) return true;
-          if(o.match(/^\s+\S+$/)) return true;
+          if(o.match(/^\s+\S+$/) && !ignorespace) return true;
         }
+    },
+
+    isEmptyArray: function(){
         if(this.isArray(o)){
           if(o.length === 0 || this.isArrayEmpty(o)){ return true; }
         }
+    },
+
+    isEmptyObject: function(o){
         if(this.isObject(o)){
           if(this.keys(o).length === 0){ return true; }
         }
+    },
 
+    isEmpty: function(o){
+        if(this.isString(o)) return this.isEmptyString(o,true);
+        if(this.isArray(o)) return this.isEmptyArray(o);
+        if(this.isObject(o)) return this.isEmptyObject(o);
         return false;
     },
 
@@ -325,25 +335,84 @@ ToolStack.Utility = {
 
     },
 
+    // returns the position of the first item that meets the value in an array
+    any: function(o,value,fn){
+       if(this.isArray(o)){
+        return this._anyArray(o,value,fn);
+      }
+      if(this.isObject(o)){
+        return this._anyObject(o,value,fn);
+      }
+    },
+
     contains: function(o,value){
-           var state = false;
-           this.forEach(o,function contain_mover(e,i,b){
-            if(e === value) {
-             state = true; 
-           }
-         },this);
+       var state = false;
+       this.forEach(o,function contain_mover(e,i,b){
+        if(e === value) {
+         state = true; 
+         }
+       },this);
 
-           return state;
-         },
+       return state;
+    },
 
-          // returns the position of the first item that meets the value in an array
-          any: function(o,value,fn){
-           if(this.isArray(o)){
-            return this._anyArray(o,value,fn);
-          }
-          if(this.isObject(o)){
-            return this._anyObject(o,value,fn);
-          }
+    merge: function(a,b,explosive){
+      var out = {};
+      this.forEach(a,function(e,i,o){
+        if(b[i] === a[i] && !explosive) return;
+        out[i] = e;
+      });
+      return out;
+    },
+
+
+    push: function(a,val,key){
+      if(this.isArray(a) || this.isString(a)) return Array.prototype.push.call(a,val);
+      if(this.isObject(a)) return a[key] = val;
+    },
+
+    matchReturnType: function(a,b){
+      if(!this.matchType(a,this.isType(b))) return;
+      if(this.isObject(a)) return {};
+      if(this.isString(a) || this.isArray(a)) return [];
+      return;
+    },
+
+    intersect: function(a,b,withKey){
+      var out = this.matchReturnType(a,b);
+      if(this.isString(a)){ a = this.values(a); b = this.values(b); }
+
+      this.forEach(a,function(e,i,o){
+          if(withKey === false && this.contains(b,e)) this.push(out,e,i);
+          if(this.hasOwn(b,i,e)) this.push(out,e,i);
+          return;
+      },this);
+
+      if(this.isString(a)) return this.normalizeArray(out).join('');
+      if(this.isArray(a)) return this.normalizeArray(out);
+      return out;
+    },
+
+    disjoint: function(a,b,withKey){
+      var out = this.matchReturnType(a,b);
+      
+      if(this.isString(a)){ a = this.values(a); b = this.values(b); }
+
+      this.forEach(a,function(e,i,o){
+          if(withKey === false && !this.contains(b,e)) this.push(out,e,i);
+          if(!this.hasOwn(b,i,e)) this.push(out,e,i);
+          return;
+      },this);
+
+      this.forEach(b,function(e,i,o){
+          if(withKey === false && !this.contains(a,e)) this.push(out,e,i);
+          if(!this.hasOwn(a,i,e)) this.push(out,e,i);
+          return;
+      },this);
+
+      if(this.isString(a)) return this.normalizeArray(out).join('');
+      if(this.isArray(a)) return this.normalizeArray(out);
+      return out;
     },
 
     _anyArray: function(o,value,fn){
@@ -396,6 +465,7 @@ ToolStack.Utility = {
        return result;
     },
 
+    //returns an array of occurences index of a particular value
     occurs: function(o,value){
        var occurence = [];
        this.forEach(o,function occurmover(e,i,b){
@@ -404,6 +474,7 @@ ToolStack.Utility = {
        return occurence;
     },
 
+    //performs an operation on every item that has a particular value in the object
     every: function(o,value,fn){
        this.forEach(o,function everymover(e,i,b){
          if(e === value){ 
@@ -530,6 +601,8 @@ ToolStack.Utility = {
     forEach: function(obj,callback,scope,breakerfunc,complete){
          if(!obj || !callback) return false;
 
+         if(typeof obj === 'string') obj = this.values(obj);
+
          if(('length' in obj && !this.isFunction(obj) && !this.isObject(obj)) || this.isArray(obj) || this.isString(obj)){
             return this._eachArray(obj,callback,scope,breakerfunc,complete);
          }
@@ -572,6 +645,7 @@ ToolStack.Utility = {
     eachAsync: function(obj,iterator,complete,scope,breaker){
           if(!iterator || typeof iterator !== 'function') return false;
           if(typeof complete !== 'function') complete = function(){};
+
           var step = 0;
           if(this.isArray(obj)) step = obj.length;
           if(this.isObject(obj)) step = this.keys(obj).length;
@@ -593,7 +667,11 @@ ToolStack.Utility = {
     eachSync: function(obj,iterator,complete,scope,breaker){
           if(!iterator || typeof iterator !== 'function') return false;
           if(typeof complete !== 'function') complete = function(){};
+
+
           var step = 0, keys = this.keys(obj),fuse;
+
+          // if(typeof obj === 'string') obj = this.values(obj);
 
           if(!keys.length) return false;
           
@@ -719,8 +797,12 @@ ToolStack.Utility = {
     },
 
     isNumber: function(o){
-       return this.matchType(o,"number");
+       return this.matchType(o,"number") && o !== Infinity;
     },
+
+    isInfinity: function(o){
+       return this.matchType(o,"number") && o === Infinity;
+     },
 
     isArgument: function(o){
        return this.matchType(o,"arguments");
@@ -740,6 +822,7 @@ ToolStack.Utility = {
 
     has: function(obj,elem,value,fn){
      var self = this,state = false;
+
      this.any(obj,elem,function __has(e,i){
       if(value){
        if(e === value){
@@ -759,9 +842,10 @@ ToolStack.Utility = {
     },
 
     hasOwn: function(obj,elem,value){
+
        if(Object.hasOwnProperty){
               if(!value) return Object.hasOwnProperty.call(obj,elem);
-              else return (Object.hasOwnProperty.call(obj,elem) === value);
+              else return (Object.hasOwnProperty.call(obj,elem) && obj[elem] === value);
         }
 
         var keys,constroKeys,protoKeys,state = false,fn = function own(e,i){
@@ -936,6 +1020,10 @@ ToolStack.Utility = {
         return false;
     },
 
+    matchObjects: function(a,b){
+      if(JSON.stringify(a) === JSON.stringify(b)) return true;
+      return false;
+    }
   };
 
 ToolStack.Utility.bind = ToolStack.Utility.proxy;ToolStack.Env =  {
@@ -1681,15 +1769,29 @@ Console.pipe = function(o,method){
 })(ToolStack.Utility);
 	ToolStack.Errors = (function(){
 
-	var abstracterror = function AbstractError(name){
-		var e = function AbstractInstance(message,constr){
-			Error.captureStackTrace(this,constr || this);
-			this.message = message;
-		};
-		e.prototype = new Error;
-		e.prototype.name = name;
-		return e;
-	},
+	var util = ToolStack.Utility,
+		c = ToolStack.Class,
+		abstracterror = function AbstractError(name){
+			var e = function AbstractInstance(message,constr){
+				Error.call(this,message);
+				Error.captureStackTrace(this,constr || arguments.callee);
+				this.message = message;
+			};
+
+			c.inherit(e,Error);
+
+			e.prototype.name = name;
+
+			// e.prototype.pretty = function(){
+			// 	util.forEach(this.stack,function(frame,index,obj){ 
+			// 		console.log('frames:',frame);
+			// 		console.error('call: %s: %d - %s',frame.getFileName(),
+			// 			frame.getLineNumber(),frame.getFunctionName());
+			// 	});
+			// };
+
+			return e;
+		},
 	noop = function(){};
 
 	return {
@@ -1717,6 +1819,13 @@ Console.pipe = function(o,method){
                   if(!this.events[es]){
                     this.events[es] = ToolStack.Callbacks.create("unique");
                   }
+              },
+
+              unset: function(es){
+                  if(!this.events) this.events = {};
+                  if(!this.events[es]) return;
+                  delete this.events[es];
+                  return true;
               },
 
               on:function(es,callback,context,subscriber){
@@ -2164,10 +2273,10 @@ ToolStack.Matchers = (function(ToolStack){
                return false;
             });
 
-            matchers.createMatcher("isTypeOf","is of type "+"{0}".magenta,function(should){
-               if(this.item !== should) return true;
-               return false;
-            });
+            // matchers.createMatcher("isTypeOf","is of type "+"{0}".magenta,function(should){
+            //    if(this.item !== should) return true;
+            //    return false;
+            // });
              
             matchers.createMatcher("isValid","is a valid object",function(should){
                 if(!util.isEmpty(this.item) && !util.isNull(this.item) && !util.isUndefined(this.item)) return true;
@@ -2184,7 +2293,7 @@ ToolStack.Matchers = (function(ToolStack){
                 return false;
             });
 
-            matchers.createMatcher('isTypeOf',' is type of '+"{0}".green,function(key){
+            matchers.createMatcher('isType',' is type of '+"{0}".green,function(key){
                 if(util.matchType(this.item,key)) return true;
                 return false;
             });
@@ -2211,6 +2320,11 @@ ToolStack.Matchers = (function(ToolStack){
 
             matchers.createMatcher('hasKeyValue','has property '+ "{0}".magenta +' with value '.white+ "{1}".green,function(key,value){
                 if(this.item[key] === value) return true;
+                return false;
+            });
+
+            matchers.createMatcher('isFunction','is a function!',function(){
+                if(util.isFunction(this.item)) return true;
                 return false;
             });
 
@@ -2269,7 +2383,7 @@ ToolStack.Matchers = (function(ToolStack){
                                  self.passed += 1;
                               }catch(j){
                                  if(j instanceof errors.MatcherError) self.failed += 1;
-                                 else throw j;
+                                 else console.log(j.message,'\n',j.stack);
                               }
                               fn(false);
                         },function(e,i,b){
@@ -2494,6 +2608,162 @@ ToolStack.Structures = {};
 			this._parent = Stack.current;
 		}
 };
+ToolStack.Atoms = function AtomCreator(json){
+
+	var  
+		util = ToolStack.Utility,
+		helpers = ToolStack.Helpers.HashMaps,
+		shell = function(key,old,val,frozen){
+			return { key:key, old: old, val: val,frozen: frozen };
+		},
+		isAtom = function(atom){
+			if(util.isObject(atom) && util.isFunction(atom.isAtom) && atom.isAtom()) return true;
+			return false;
+		},
+		add = fetch = remove = modify = null,
+		atom = {};
+
+
+	atom.e = ToolStack.Events();
+	atom.d = {};
+	atom.h = {};
+
+	atom.h.add = util.bind(helpers.add,atom.d);
+	atom.h.exists = util.bind(helpers.exists,atom.d);
+	atom.h.remove = util.bind(helpers.remove,atom.d);
+	atom.h.fetch = util.bind(helpers.fetch,atom.d);
+	atom.h.modify = util.bind(helpers.modify,atom.d);
+
+	atom.e.set('change');
+
+	atom.get = function(key){
+		if(this.h.exists(key)) return this.h.fetch(key)['val'];
+	};
+
+	atom.set = function(key,value){
+		if(!key || !value) return;
+		if(util.isObject(value)) return this._setAtom(this.h.exists(key),key,value);
+
+		this._setUnit(this.h.exists(key),key,value);
+		return this.emit('change');
+	};
+
+	atom._setUnit = function(exists,key,value){
+		if(!exists){
+			this.e.set(key.concat(':change'));
+			this.e.set(key.concat(':deleted'));
+			return this.h.add(key,shell(key,value,value,value));
+		}
+
+		var item = this.h.fetch(key);
+
+		if(item.val === value) return;
+
+		item.old = item.val;
+		item.val = value;
+		item.frozen = value;
+
+		this.emit(key.concat(':change'),value);
+		// this.emit('change');
+		return this.h.modify(key,item);
+	};
+
+	atom._setAtom = function(exists,key,obj){
+		if(!exists){
+			this.e.set(key.concat(':change'));
+			this.e.set(key.concat(':deleted'));
+			return this.h.add(key,shell(key,obj,AtomCreator(obj),obj));
+		}
+
+		var item = this.h.fetch(key);
+
+		if(util.matchObjects(item.frozen,obj)) return;
+
+		item.old = item.frozen;
+
+		item.val.implode();
+		item.val = AtomCreator(obj);
+		item.frozen = obj;
+
+		this.emit(key.concat(':change'));
+		// this.emit('change');
+		return this.h.modify(key,item);
+	};
+
+	atom.eject = function(key){
+		var item = this.h.fetch(key);
+		if(!item) return;
+
+		if(isAtom(item.val)) item.val.implode();
+		this.h.remove(key);
+		return this.emit(key.concat(':deleted'));
+	};
+
+	// atom.union = function(atom){
+	// 	//combines two atoms into one
+
+	// };
+
+	// atom.split = function(){
+	// 	//splits up all data into single atoms
+
+	// };
+
+	atom.json = function(callback){
+		var data = {};
+		util.eachAsync(this.d,function(e,i,o,fn){
+			data[i] = e.frozen;
+			fn(false);
+		},function(){
+			if(callback) callback(JSON.stringify({ data: data, isAtom: true }));
+		});
+	};
+
+	atom.isAtom = function(){ return true; };
+
+	atom.fuseAtom = function(json){
+		if(util.isString(json)) json = JSON.parse(json);
+		if(!json.isAtom) throw new Error('Invalid Atomd JSON');
+		util.merge(json,this.d);
+		return true;
+	};
+
+	atom.fuseJSON = function(json){
+		if(util.isString(json)) json = JSON.parse(json);
+		util.eachAsync(json, function(e,i,o,fn){
+			this.set(i,e);
+			fn(false);
+		},null,this);
+	};
+
+	atom.fuse = function(atom){
+		if(util.isString(atom)){
+			atom = JSON.parse(atom);
+			return ( atom.isAtom === true ? this.fuseAtom(atom) : this.fuseJSON(atom));
+		};
+
+		if(isAtom(atom)) return atom.json(function(json){ this.fuse(json); });
+	};
+
+	atom.implode = function(){
+		util.eachAsync(this.d,function(e,i,o,fn){
+			if(util.isObject(e) && isAtom(e)) e.implode();
+			fn(false);
+		},function(){
+			util.explode(this.d);
+			util.explode(this.h);
+			util.explode(this);
+		},this);
+	};
+
+	atom.on = util.bind(atom.e.on,atom.e);
+	atom.off = util.bind(atom.e.off,atom.e);
+	atom.emit = util.bind(atom.e.emit,atom.e);
+
+	atom.fuseJSON(json);
+
+	return atom;
+};
 ToolStack.Middleware = function(keygrator,comparator,fCallback){
 
 	var util = ToolStack.Utility,
@@ -2595,7 +2865,7 @@ ToolStack.Helpers = (function Helpers(ts){
 	helper = {};
 	helper.HashMaps = {
 		fetch: function(key){
-			if(!helper.HashMaps.exists.call(this,key)) return false;
+			if(!helper.HashMaps.exists.call(this,key)) return;
 			return this[key];
 		},
 		exists: function(key,value){
@@ -2608,13 +2878,13 @@ ToolStack.Helpers = (function Helpers(ts){
 		},
 		add: function(key,value,validator,force){
 			if(!validator) validator = validatorDefault;
-			if(helper.HashMaps.exists.call(this,key) || !validator(value)) return false;
+			if(helper.HashMaps.exists.call(this,key) || !validator(value)) return;
 			this[key] = value;
 			return true;
 		},
 		modify: function(key,value,validator){
 			if(!validator) validator = validatorDefault;
-			if(!helper.HashMaps.exists.call(this,key) || !validator(value)) return false;
+			if(!helper.HashMaps.exists.call(this,key) || !validator(value)) return;
 			this[key] = value;
 			return true;
 		}
@@ -2630,25 +2900,6 @@ ToolStack.Helpers = (function Helpers(ts){
 		if(util.isFunction(value)) return true;
 		return false;
 	},
-	// process = function(api){
-	// 	if(api.queue.length < 0) return false;
-
-	// 	console.log('calling');
-
-	// 	api.processing = true;
-
-	// 	util.eachAsync(api.queue,function(e,i,o,fn){
-	// 		var item = e;
-	// 		item.fn(item.channel,item.domain,item.args);
-	// 		o.shift();
-	// 		fn(false)
-	// 	},function(err){
-	// 		api.processing  = false;
-	// 		if(api.queue.length > 0) api.deliver();
-	// 	},api);
-
-	// 	return false;
-	// },
 	domain = util.clone(helper,{}),
 	add = domain.add,
 	modify = domain.modify,
@@ -2757,6 +3008,12 @@ ToolStack.Helpers = (function Helpers(ts){
 
 	api.getChannel = function(key){
 		return helper.fetch.call(this.channels,key);
+	};
+
+	api.removeChannel = function(key){
+		if(!helper.exists.call(this.channels,key)) return false;
+
+		helper.remove.call(this.channels,key);
 	};
 
 	api.sandbox = function(){

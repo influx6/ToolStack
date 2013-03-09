@@ -1,6 +1,6 @@
 {
   "name": "tsk",
-  "version": "0.3.2",
+  "version": "0.3.5",
   "description": "simple,lightweight mass of utilities for the masses",
   "main": "./builds/toolstack.js",
   "scripts": {

@@ -1,7 +1,2 @@
 .DS_Store
-./builds
-*/builds
-/*.vim
-/*.swp
-*.swp
-*.vim
+*.log
