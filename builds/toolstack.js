@@ -2936,7 +2936,8 @@ ToolStack.Helpers = (function Helpers(ts){
 	};
 
 	api.resume = function(){
-		if(!this.paused || !this.pending) return;
+		if(!this.paused && !this.pending) return;
+		if(!this.pending) return;
 		this.paused = false;
 		this.deliver();
 	};
