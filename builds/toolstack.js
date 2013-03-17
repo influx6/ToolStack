@@ -88,11 +88,11 @@ ToolStack.Utility = {
     },
 
     templateIt: function(source,keys){
-      var src = source, sets;
-      if(!this.isObject(keys) && !this.isArray(keys) && !this.isString(keys)) sets = [keys];
-      else sets = keys;
+     if(!this.isString(source) && !this.isArray(keys)) return;
 
-      this.forEach(sets,function(e,i,o){
+      var src = source;
+      
+      this.forEach(keys,function(e,i,o){
           var reggy = new RegExp("\\{"+(i)+"\\}");
           src = src.replace(reggy,e);
       });
@@ -1026,7 +1026,8 @@ ToolStack.Utility = {
     }
   };
 
-ToolStack.Utility.bind = ToolStack.Utility.proxy;ToolStack.Env =  {
+ToolStack.Utility.bind = ToolStack.Utility.proxy;
+ToolStack.Utility.each = ToolStack.Utility.forEach;ToolStack.Env =  {
          name: "ToolStack.Env",
          version: "1.0.0",
          description: "simple environment detection script",
@@ -2184,19 +2185,22 @@ ToolStack.Matchers = (function(ToolStack){
               args = ([].splice.call(arguments,0));
               return args.splice(1,args.length).join(split);
             },
-            generateResponse = function(name,item,should,message,scope){
+            generateResponse = function(name,item,should,message,scope,verbose){
               var template = util.templateIt(message,should),
                   head  = makeString(" ","Matcher:".bold.blue,name.bold.yellow);
-                  checked = makeString(" "," if",item,template,"\n").white;
+                  checked = makeString(" ","\n","\t","Checked:".magenta," if",item,template,"\n").white;
 
                 if(scope) head = head.concat(makeString(" ","  From:".bold.blue,scope.bold.yellow));
                 var success = head.concat(makeString(" ","  Status:".bold.blue,"Passed!".bold.green,"\n","\t")),
                 failed = head.concat(makeString(" ","    Status:".bold.blue,"Failed!".bold.red,"\n","\t"));
 
-                var success = head.concat(makeString(" ","  Status:".bold.blue,"Passed!".bold.green,"\n","\t","Checked:".magenta)),
-                failed = head.concat(makeString(" ","    Status:".bold.blue,"Failed!".bold.red,"\n","\t","Checked:".magenta));
-                success = success.concat(checked);
-                failed = failed.concat(checked);
+                var success = head.concat(makeString(" ","  Status:".bold.blue,"Passed!".bold.green)),
+                failed = head.concat(makeString(" ","  Status:".bold.blue,"Failed!".bold.red));
+
+                if(verbose){
+                  success = success.concat(checked);
+                  failed = failed.concat(checked);
+                }
                   
                 return { pass: success, fail: failed };
             },
@@ -2220,6 +2224,7 @@ ToolStack.Matchers = (function(ToolStack){
             matchers.scope = null;
             matchers.item = null;
             matchers.compliant = true;
+            matchers.verbose = true;
 
             matchers.scoped = function(scope){
               this.scope = scope;
@@ -2244,7 +2249,7 @@ ToolStack.Matchers = (function(ToolStack){
                           var should = util.arranize(arguments);
                           var desc = (util.isString(sandbox.scope) ? sandbox.scope : (util.isObject(sandbox.scope) ? sandbox.scope.desc : ''));
                           var res = fn.apply(sandbox,should),
-                              response = generateResponse(name,util.processIt(sandbox.item),util.processIt(should),message,desc);
+                              response = generateResponse(name,util.processIt(sandbox.item),util.processIt(should),message,desc,sandbox.verbose);
                           return (res ? responseHandler(true,response,sandbox.compliant) : responseHandler(false,response,sandbox.compliant));
                       };
                 
@@ -2326,6 +2331,16 @@ ToolStack.Matchers = (function(ToolStack){
             matchers.createMatcher('isFunction','is a function!',function(){
                 if(util.isFunction(this.item)) return true;
                 return false;
+            });
+
+            matchers.createMatcher('andFunctions','all operations are true'.green,function(){
+              var state = true, args = util.arranize(arguments);
+              util.each(args,function(){},this,function(e,i,o){
+                if(util.isFunction(e) && e(this.item)) return false;
+                state = false;
+                return true;
+              })
+              return state;
             });
 
             return matchers;
