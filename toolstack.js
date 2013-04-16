@@ -1,4 +1,4 @@
-var ToolStack =  {},_each,
+var ToolStack = {},_each,
     module = module || { exports: {}};
 
 module.exports.ToolStack = ToolStack;
@@ -45,4 +45,3 @@ ToolStack.ns = function(space,fn,scope){
          delete obj.parent;
          return obj;
 };
-

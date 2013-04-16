@@ -1,4 +1,4 @@
-var ToolStack =  {},_each,
+var ToolStack = {},_each,
     module = module || { exports: {}};
 
 module.exports.ToolStack = ToolStack;
@@ -45,7 +45,6 @@ ToolStack.ns = function(space,fn,scope){
          delete obj.parent;
          return obj;
 };
-
 ToolStack.Utility = {
   
     //meta_data
@@ -55,6 +54,10 @@ ToolStack.Utility = {
     author: "Alexander Adeniyi Ewetumo",
     version: "0.3.0",
 
+    letters: ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"],
+    
+    symbols: ["!", "\"",":",";",".","=",",","/","|","/", "#", "$", "%", "&", "'", "(", ")", "*","?","+","@","^","[","]","{","}","-","+","_","<",">"],
+
     escapeHTML: function(html){
       return String(html)
         .replace(/&(?!\w+;)/g, '&amp;')
@@ -63,8 +66,51 @@ ToolStack.Utility = {
         .replace(/"/g, '&quot;');
     },
 
+    throttle: function(fn,ms){
+      var self = this,
+          tmo,
+          ctx,
+          args,
+          res,
+          prev = 0,
+          next = function next(){
+            prev = new Date;
+            tmo = null;
+            res = fn.apply(ctx,args);
+          };
+
+      return function(){
+        var now = new Date;
+        var rem = ms - ( now - prev);
+        ctx = this;
+        args = self.arranize(arguments);
+        if(rem <= 0){
+          clearTimeout(tmo);
+          tmo = null;
+          prev = now;
+          res = fn.apply(ctx,args)
+        }else if(!tmo){
+          tmo = setTimeout(next,rem);
+        }
+        return res;
+      };
+    },
+
     clinseString: function(source){
       return String(source).replace(/"+/ig,'');
+    },
+
+    chunk: function Chunk(word,spot,res){
+      if(!word.length || !this.isString(word)) return res;
+      var self = this,o = this.toArray(word), out = res || [];
+      out.push(this.makeSplice(o,0,spot || 1).join(''));
+      if(o.length) return self.chunk(o.join(''),spot,out); 
+      return out;
+    },
+
+    toArray: function(o){
+      if(this.isString(o) || this.isObject(o)) return this.values(o);
+      return [o];
     },
 
     fixJSCode: function(js){
@@ -73,6 +119,7 @@ ToolStack.Utility = {
       .replace(/\n/g, '')
       .replace(/ +/g, ' '); 
     },
+
     clinse : function(o){
       if(this.isNull(o)) return "null";
       if(this.isUndefined(o)) return "Undefined";
@@ -81,6 +128,8 @@ ToolStack.Utility = {
       if(this.isBoolean(o)) return o.toString();
       return o;
     },
+
+
     processIt: function(o){
       if(this.isArray(o)) return this.map(o,function(e){ return this.clinse(e); },this);
       if(this.isFunction(o) || this.isObject(o)) return (o.name ? o.name : this.isType(o));
@@ -281,7 +330,7 @@ ToolStack.Utility = {
       for(; i < len; i++){
         item = o[i];
         if(typeof item === "undefined" || item === null || item === undefined) ++tf;
-        if( ++step === len) if(tf === len) return true;
+        if( ++step === len && tf === len) return true;
       };
       return false;
     },
@@ -296,11 +345,22 @@ ToolStack.Utility = {
         if(!context) context = to;
 
         this.forEach(from,function proxymover(e,i,b){
-           if(!this.matchType(e,"function")) return;
+           if(!this.isFunction(e)) return;
            to[i] = function(){ 
             return b[i].apply(context,arguments);
           }
         },this);
+    },
+
+    toJSON: function(obj,showfunc,indent,custom){
+      var self = this;
+      indent = indent || 5;
+      if(!showfunc) return JSON.stringify(obj,indent);
+      return JSON.stringify(obj,function(i,v){
+        if(custom) return custom(i,v);
+        if(self.isFunction(v)) return v.toString();
+        return v;
+      },indent);
     },
 
     createProperty: function(obj,name,fns,properties){
@@ -796,6 +856,10 @@ ToolStack.Utility = {
        return (o === null && this.matchType(o,'null'));
     },
 
+    isValid: function(o){
+      return (!this.isNull(o) && !this.isUndefined(o) && !this.isEmpty(o));
+    },
+
     isNumber: function(o){
        return this.matchType(o,"number") && o !== Infinity;
     },
@@ -1026,6 +1090,7 @@ ToolStack.Utility = {
     }
   };
 
+
 ToolStack.Utility.bind = ToolStack.Utility.proxy;
 ToolStack.Utility.each = ToolStack.Utility.forEach;ToolStack.Env =  {
          name: "ToolStack.Env",
@@ -1241,7 +1306,7 @@ ToolStack.Utility.each = ToolStack.Utility.forEach;ToolStack.Env =  {
                   return to;
             },
             
-            create : function(classname,ability,parent){
+            create : function(classname,ability,parent,beLightweight){
 
                   var self = this, 
                      Class = function Class(){
@@ -1305,12 +1370,13 @@ ToolStack.Utility.each = ToolStack.Utility.forEach;ToolStack.Env =  {
 
 
 
-                  //because calling new Class().setup() can be a hassle,alternative wrapper method that calls these methods
+                  //because calling new Class().init() can be a hassle,alternative wrapper method that calls these methods
                   //is created: simple do Class.make(), it will create a new Class object and call setup with required arguements
 
                   Class.make = function(){
                      var shell = Class();
                      shell.init.apply(shell,arguments);
+                     if(beLightweight){ delete shell.Super; delete shell.super; }
                      return shell;
                   };
                   
@@ -1606,6 +1672,7 @@ Console.pipe = function(o,method){
                               }else{
                                  e.fn.apply((e.context ? e.context : context),args);
                               }
+                              if(flags.fireRemove) delete list[fireIndex];
                            }
                         }
                         firing = false;
@@ -1622,7 +1689,7 @@ Console.pipe = function(o,method){
                      },
 
                      instance =  {
-                        
+
                         add: function(){
                            if(list){
                               if(arguments.length === 1){
@@ -1654,7 +1721,10 @@ Console.pipe = function(o,method){
                         },
 
                         fire: function(){
-                           this.fireWith(this,arguments);
+                           var args = su.arranize(arguments);
+                           (function(_){
+                              _.fireWith(_,args);
+                           })(instance);
                            return this;
                         },
 
@@ -1808,18 +1878,20 @@ Console.pipe = function(o,method){
 
       return function(){
             
-          return {
+          var e = {
                name: "ToolStack.Events",
                version: "1.0.0",
                description: "Publication-Subscription implementation using Callback API",
                licenses:[ { type: "mit", url: "http://mths.be/mit" }],
                author: "Alexander Adeniyin Ewetumo",
 
-              set: function(es){
+              set: function(es,flag){
                   if(!this.events) this.events = {};
                   if(!this.events[es]){
-                    this.events[es] = ToolStack.Callbacks.create("unique");
+                    var flags = (flag && typeof flag === 'string') ? flag.concat('unique') : "unique";
+                    return (this.events[es] = ToolStack.Callbacks.create(flag));
                   }
+                  return this.events[es];
               },
 
               unset: function(es){
@@ -1829,11 +1901,21 @@ Console.pipe = function(o,method){
                   return true;
               },
 
+              once: function(es,callback,context,subscriber){
+                 if(!this.events) this.events = {};
+                  if(!es || !callback){ return; }
+
+                  var e = this.set(es,'fireRemove');
+                  e.add(callback,context,subscriber);
+
+                  return;
+              },
+
               on:function(es,callback,context,subscriber){
                  if(!this.events) this.events = {};
                   if(!es || !callback){ return; }
 
-                  var e = this.events[es] = (this.events[es] ? this.events[es] : ToolStack.Callbacks.create("unique"));
+                  var e = this.set(es);
                   e.add(callback,context,subscriber);
 
                   return;
@@ -1863,12 +1945,16 @@ Console.pipe = function(o,method){
 
                  if(!e) return this;
 
-                  e.fire(args);
+                  e.fire.apply(null,args);
 
                  return this;
               }
             
           };
+
+          //compatibility sake
+          e.removeListener = e.removeAllListeners = e.off;
+          return e;
       };
 
 })(ToolStack);ToolStack.Promise = (function(SU,CU){
@@ -2200,6 +2286,9 @@ ToolStack.Matchers = (function(ToolStack){
                 if(verbose){
                   success = success.concat(checked);
                   failed = failed.concat(checked);
+                }else{
+                  success = success.concat('\n');
+                  failed = failed.concat('\n');
                 }
                   
                 return { pass: success, fail: failed };
@@ -2223,7 +2312,7 @@ ToolStack.Matchers = (function(ToolStack){
 
             matchers.scope = null;
             matchers.item = null;
-            matchers.compliant = true;
+            matchers.compliant = false;
             matchers.verbose = true;
 
             matchers.scoped = function(scope){
@@ -2313,17 +2402,27 @@ ToolStack.Matchers = (function(ToolStack){
                 return false;
             });
 
+            matchers.createMatcher('isObject',' is an '+"Object".red,function(){
+                if(util.isObject(this.item)) return true;
+                return false;
+            });
+
+            matchers.createMatcher('isArray',' is an '+"Array".red,function(){
+                if(util.isArray(this.item)) return true;
+                return false;
+            });
+
             matchers.createMatcher('isFalse',' is '+"False".red,function(){
                 if(this.item === false) return true;
                 return false;
             });
 
-            matchers.createMatcher('hasKeyForm','has property '+ "{0}".magenta +' of type '.white+ "{1}".green,function(key,form){
+            matchers.createMatcher('isKeyOfType','has property '+ "{0}".magenta +' of type '.white+ "{1}".green,function(key,form){
                 if(util.matchType(this.item[key],form)) return true;
                 return false;
             });
 
-            matchers.createMatcher('hasKeyValue','has property '+ "{0}".magenta +' with value '.white+ "{1}".green,function(key,value){
+            matchers.createMatcher('isKeyWithValue','has property '+ "{0}".magenta +' with value '.white+ "{1}".green,function(key,value){
                 if(this.item[key] === value) return true;
                 return false;
             });
@@ -2333,15 +2432,15 @@ ToolStack.Matchers = (function(ToolStack){
                 return false;
             });
 
-            matchers.createMatcher('andFunctions','all operations are true'.green,function(){
-              var state = true, args = util.arranize(arguments);
-              util.each(args,function(){},this,function(e,i,o){
-                if(util.isFunction(e) && e(this.item)) return false;
-                state = false;
-                return true;
-              })
-              return state;
-            });
+            // matchers.createMatcher('andFunctions','all operations are true'.green,function(){
+            //   var state = true, args = util.arranize(arguments);
+            //   util.each(args,function(){},this,function(e,i,o){
+            //     if(util.isFunction(e) && e(this.item)) return false;
+            //     state = false;
+            //     return true;
+            //   })
+            //   return state;
+            // });
 
             return matchers;
 
@@ -2401,11 +2500,11 @@ ToolStack.Matchers = (function(ToolStack){
                                  else console.log(j.message,'\n',j.stack);
                               }
                               fn(false);
-                        },function(e,i,b){
+                        },/*function(e,i,b){
                               var message = _su.makeString("   ",("Total Passed:".bold.grey + (" "+self.passed).bold.green),
                                  ("Total Failed:".bold.grey + (" "+ self.failed).bold.red), ("Total Runned:".bold.grey + (" "+self.total).bold.yellow) + "\n");
                               Console.log(message);
-                        },self);
+                        }*/null,self);
 
                     }
         };
@@ -2460,57 +2559,103 @@ ToolStack.Matchers = (function(ToolStack){
 
 })(ToolStack);
 
-ToolStack.Structures = {};
-	var nodesig = "__node__",
-     	nodelistsig = "__nodelist__",
-	    //alises
-	    struct = ToolStack.Structures;
+(function(ToolStack){
 
+    ToolStack.Structures = {};
+	    
+      var util = ToolStack.Utility,
+      struct = ToolStack.Structures;
+      struct.Range = function(range,generator){
+        if(!util.isString(range)) throw new Error('Only Stringed ranges eg "a..z" or "1..2" are allowed!');
+
+        var r = range.split('..');
+        if(r.length > 2) r.length = 2;
+
+        return generator.apply(null,r);
+      };
+      struct.NumberRange = function(range,inc){
+        return struct.Range(range,function(min,max){
+            min = parseInt(min);  max = parseInt(max);
+            var series = [], tinc = inc || 1;
+            // inject = function(c){ return series.push(c); };
+            while(min <= max){ series.push(min); min += tinc; };
+            return series;
+          });
+      };
       struct.Node = function(elem,next,previous){
-        return { elem: elem, next : next, previous: previous, signature:"__node__"};
+        var self = this,
+        node = {
+          isNode: function(){ return true; },
+          elem: elem, 
+          next : next || null, 
+          previous: previous || null,
+          parent: null,
+          udex: 0,
+          append: function(elem){
+            var nxt = this.next;
+            if(!util.isFunction(elem.isNode)){
+              (!this.next) ? this.next = struct.Node(elem) : this.next = struct.Node(elem,nxt,self);
+              // this.next.next = nxt;
+              return;
+            }
+            this.next = elem; 
+            elem.next = nxt;
+            return true;
+          },
+          prepend: function(elem){
+            var prv = this.previous;
+            if(!util.isFunction(elem.isNode)){
+              (!this.previous) ? this.previous = struct.Node(elem) : this.previous = struct.Node(elem,self,prv);
+              this.previous.next = this;
+              return;
+            }
+            this.previous = elem;
+            elem.previous = prv;
+            elem.next = this;
+            return true;
+          }
+        };
+
+        node.left = node.previous;
+        node.right = node.next;
+        return node;
       };
+
       struct.NodeList = function(){
-          this.first = null;
-          this.last = this.first;
-          this.size = 0;
-      };
-      struct.NodeList.prototype = {
-          signature: nodelistsig,
+        return {
+          root: null,
+          tail: null,
+          size: 0,
+          isList: function(){ return true; },
+          isEmpty: function(){ if(!this.size && !this.root && !this.tail) return true; return false;},
+          head: function(){ return this.root; },
+          rear: function(){ return this.tail; },
           add: function(elem,node){
-              var n = struct.Node(elem,null,node), pr,nx;
-              if(!this.first){
-                this.first = this.last = n;
-                this.last.previous = this.first;
-                this.first.previous = this.last;
-                this.size +=1;
-                return true;
-              } 
-              if(!node){
-                  pr = this.last.previous; nx = this.last.next;
-                  n.previous = this.last;
-                  n.next = nx;
-                  this.last.next = n;
-                  this.last = n;
-                  this.first.previous = this.last;
-                  this.size +=1;
-                  return true;
-              }else{
-                pr = node.previous; nx = node.next; nx.previous = n;
-                node.next = n; n.next = nx; n.previous = node;
-                this.size +=1;
-                return true;
-              }
+             if(!this.root){
+              this.root = struct.Node(elem,node);
+              this.tail = this.root;
+              // this.root.isRoot = true;
+             }
+            if(node) node.append(elem);
+            else{
+              this.tail.append(elem);
+              this.tail = this.tail.next;
+            }
+            this.size += 1;
+            return;
           },
 
-          remove: function(elem,node){
+          remove: function(elem){
+            if(!this.size) return;
             var n,pr,next;
-            if(this.first.elem === elem && this.first === this.last){
-                 n = this.first;
-                 this.first = this.last = null;
-                 this.size -= 1;
+
+            if(this.size === 1){
+                 n = this.root;
+                 this.root = this.tail = null;
+                 this.size = 0;
                  return n;
             }
-            n = this.first;
+            n = this.root;
             while(n.next){
               if(n.elem === elem){
                 pr = n.previous; nx = n.next;
@@ -2523,95 +2668,264 @@ ToolStack.Structures = {};
             return n;
           
           },
-
+          //adds from the back of the tail element
           prepend: function(elem){
-            this.add(elem,this.last.previous);
+             if(!this.root){
+              this.root = struct.Node(elem);
+              this.tail = this.root;
+              this.size = 1;
+              return this;
+              // this.root.isRoot = true;
+             }
+            this.root.prepend(elem);
+            this.root = this.root.previous;
+            this.size += 1;
+            // this.add(elem,this.root);
             return this;
           },
-
+          //adds in front of the tail element
           append: function(elem){
-            this.add(elem);
+            if(!this.root){
+              this.root = struct.Node(elem);
+              this.tail = this.root;
+              this.size = 1;
+              return this;
+              // this.root.isRoot = true;
+             }
+            // this.add(elem);
+            this.tail.append(elem);
+            this.tail = this.tail.next;
+            this.size += 1;
             return this;
           },
-
-          removeHead: function(){
-            var n = this.first, pr = n.previous, nx = n.next;
-            if(this.first === this.last){
-                this.first = this.last = null; this.size = 0;
+          //pops of the root of the list
+          popHead: function(){
+            if(!this.size) return;
+            var n = this.root, pr = n.previous, nx = n.next;
+            if(this.size === 1){
+                this.root = this.tail = null; this.size = 0;
                 return n;
             } 
             nx.previous = pr; 
-            delete this.first;
-            this.first = nx;
+            delete this.root;
+            this.root = nx;
             this.size -= 1;
             return n;
           },
 
-          removeTail: function(){
-            var n = this.last, pr = n.previous, nx = n.next;
-            if(this.last === this.first){
-                this.first = this.last = null; this.size = 0;
+          popTail: function(){
+            if(!this.size) return;
+            var n = this.tail, pr = n.previous, nx = n.next;
+            if(!this.size === 1){
+                this.root = this.tail = null; this.size = 0;
                 return n;
             } 
             pr.next = nx; 
             if(nx) nx.previous = pr;
-            delete this.last;
-            this.last = pr;
+            delete this.tail;
+            this.tail = pr;
             this.size -= 1;
             return n;
           },
 
           getIterator: function(){
-            return struct.ListIterator(this);
-          }
+            if(this.itr){ this.itr.reset(); return this.itr; }
+            return (this.itr = struct.ListIterator(this));
+          },
+        };
       };
+
       struct.Iterator = function(){
         return { 
-           focus: null, current: null,
-           next: function(){}, hasNext: function(){},
-           item: function(){}, signature : "__iterator__",
+           lists: null, 
+           current: null,
+           next: function(){}, 
+           hasNext: function(){ return false; },
+           item: function(){},
            reset: function(){ this.current = null; return this;}
         };
       };
-      struct.ListIterator = function(focus){
-        if(!focus.signature === nodelistsig) return;
-        this._iterator = struct.Iterator();
-        this._iterator.focus = focus;
-        this._iterator.size = focus.size;
-        this._iterator.current = focus.first;
-        this._iterator.hasNext = function(){
-          if(this.current) return true;
-          return false;
-        };
-        this._iterator.next = function(){
-          try{
-            if(this.current.next) this.current = this.current.next;
-            else this.current = null;
-            return this;
-          }catch(e){
-            return;
-          }
-        };
-        this._iterator.item = function(){
-          try{
-            if(!this.current) return;
-            return this.current.elem;
-          }catch(e){
-            return;
-          }
+      struct.ListIterator = function(list){
+        if(!util.isFunction(list.isList)) return;
+        var iterator = struct.Iterator();
+
+        iterator.lists = list;
+
+        iterator.next = function(){ 
+          if(!this.current) return (this.current = this.lists.root);
+        }
+
+        iterator.hasNext = function(){
+          if(!this.current) return (this.current = this.lists.root).next;
+          return this.current.next;
         };
 
-        return this._iterator;
+        iterator.item = function(){
+          if(!this.current) return (this.current = this.lists.root).elem;
+        };
+
+        return this.iterator;
       };
       struct.Stack = function(){
-          var stack =  {
-            list : struct.NodeList(),
-            pop: function(){},
-            shift: function(){},
+          var s =  {
+            stack : new struct.NodeList(),
+            pop: function(){
+              return this.stack.popTail().elem;
+            },
+            shift: function(){
+              return this.stack.popHead().elem;
+            },
+            unShift: function(elem){
+              this.stack.prepend(elem);
+              return this;
+            },
+            push: function(elem){
+              this.stack.append(elem);
+              return this;
+            },
+            isEmpty: function(){
+              return this.stack.isEmpty();
+            },
+            elem: function(){
+              if(this.stack.isEmpty()) return null;
+              return this.queue.rear().elem;
+            },
           };
           
-          return stack;
-      };ToolStack.Stalk = {
+          return s;
+      };
+      struct.Queue = function(){
+        var q = {
+          queue: struct.NodeList(),
+          enQueue: function(elem){
+            this.queue.append(elem);
+            return this;
+          },
+          elem: function(){
+            if(this.queue.isEmpty()) return null;
+            return this.queue.head().elem;
+          },
+          deQueue: function(){
+            this.queue.popHead();
+            return this;
+          },
+          isEmpty: function(){
+            return this.queue.isEmpty();
+          }
+        };
+        return q;
+      };
+      struct.Tree = function(elem,left,right,root){
+        var tree = {};
+        tree.elem = elem;
+        tree.root = null;
+        tree.left = null;
+        tree.right = null;
+        tree.height = 0;
+
+        var makeChild = function(elem,prop,parent){
+          if(util.isFunction(elem.isNode)) return (this[prop] = struct.Tree(elem.elem));
+          // if(util.isFunction(elem.isList)) return (this[prop] = struct.Tree(elem));
+          if(util.isFunction(elem.isTree)) return (this[prop] = elem);
+          return (this[prop] = struct.Tree(elem));
+        };
+
+        tree.setLeft = function(elem){
+          var l =  makeChild(elem,'left');
+          l.root = this;
+          return this;
+        };
+
+        tree.setRight = function(elem){
+          var r = makeChild(elem,'root');
+          r.root = this;
+          return this;
+        };
+
+        tree.setRoot = function(root,unroot){
+          if(this.root && !unroot) return;
+          if(!util.isFunction(root.isTree)) return;
+          
+          this.root = root;
+          if(!root.left) root.setLeft(this);
+          else if(!root.right) root.setRight(this);
+          //well you handle where you want to put it
+        };
+
+        tree.isTree = function(){ return true; };
+
+        if(left) this.setLeft(left);
+        if(right) this.setLeft(right);
+        if(root) this.setRoot(root);
+
+        return tree;
+      };
+
+      struct.PriorityQueueBin = function(keygator){
+
+        var bin = {};
+
+        bin.keygen = util.isFunction(keygator) ? keygator : function(i){ return i };
+        bin.register = {};
+        bin.ranges = [];
+        bin.rotor = [];
+        //this dictates if the bin pops individual bins at each call of eject rather than
+        // poping all contents of a bin before moving to a lower priority bin
+        bin.parrallel = false;
+        bin.bins = {};
+
+        bin.createBin = function(id,key){
+          if(this.bins[id]) return;
+          var k,bin = struct.Queue();
+          bin.key = this.keygen(key);
+          this.bins[id] = bin;
+          ((k = this.register[bin.key]) ? k.push(id) : this.register[bin.key] = [id]);
+          if(this.ranges.indexOf(bin.key) === -1)  this.ranges.push(bin.key)
+          return this;
+        };
+
+        bin.grabBin = function(id){
+          return this.bins[id];
+        };
+
+        bin.grabPriority = function(id){
+          return this.register[id];
+        }
+
+        //push by priority or by id
+        bin.queue = function(id,msg){
+          if(!id || !msg) return;
+
+          var bin = this.grabBin(id);
+          if(bin) bin.enQueue(msg);
+          return;
+        };
+
+        bin.eject = function(fn){
+          //allows selective ejection for specific cases,if without arguments,eject pops the first highest
+          //priority bin
+          if(!this.rotor.length) this.rotor = util.clone(this.ranges);
+          console.log(this.rotor);
+          var i = this.grabPriority(this.rotor[0]), sz = i.length,ez = 0;
+          util.eachSync(i,function(e,i,o,c){ 
+            var b = this.grabBin(e);
+            if(util.isFunction(fn) && !b.isEmpty()){ fn(b.elem()); b.deQueue(); };
+            if(b.isEmpty()) ez += 1;
+            c();
+          },function(){
+            if(ez >= sz){
+              this.rotor.shift();
+              ez = 0;
+            }
+          },this);
+
+        };
+
+        // util.each(sets,function(e,i){ this.createBin(e,i); } ,bin);
+        return bin;
+      };
+
+})(ToolStack);ToolStack.Stalk = {
 		 name: "ToolStack.Stalk",
          version: "0.0.2",
          description: "a basic exception managment library for functional programming",
@@ -2906,144 +3220,78 @@ ToolStack.Helpers = (function Helpers(ts){
 	};
 
 	return helper;
-})(ToolStack);ToolStack.MessageAPI = (function(ts){
+})(ToolStack);ToolStack.MQ = (function(ts){
 
 
-	var util = ts.Utility,
-	helper = ts.Helpers.HashMaps,
-	validator = function(value){
-		if(util.isFunction(value)) return true;
-		return false;
-	},
-	domain = util.clone(helper,{}),
-	add = domain.add,
-	modify = domain.modify,
-	api = {};
+	var util = ts.Utility, 
+		ds = ts.Structures,
+		q = {},
+		dq = ts.DelayQueue = function(ms,parrallel){
 
-	domain.add = function(key,value){
-		return add.call(this,key,value,validator);
-	};
+			var q = {
+				queue: ds.Queue(),
+				parrallel: parrallel || false,
+				paused: false,
+				flushed: false,
+				timer: null,
+				delay:ms,
+				active: true,
+				maxpool: 200,
+			};
 
-	domain.modify = function(key,value){
-		return modify.call(this,key,value,validator);
-	};
+			q.isPending = function(){ return !!this.pending; };
 
-	api.queue = [];
-	api.channels = {};
-	// api.up = false;
-	api.paused = false;
-	api.immediate = null;
-	api.clock = null;
-	api.pending = false;
-	api.tick = 500;
+			q.maxOut = function(){
+				if(!this.pending && this.queue.length) return false;
+				return true;
+			};
 
-	api.deliver = function(){
-		if(this.paused) return this.resume();
-		if(!this.pending) return this._manage();
+			q.resume = function(){
+				if(this.paused()) return;
+				this.paused = false;
+			};
 
-		var self = this; 
-		this.clock = util.delay(function(){
-			self._manage();
-			var item = self.queue.shift();
-			if(item) item.fn(item.channel,item.domain,item.args);
-			self.deliver();
-		},this.tick);
-	};
+			q.pause = function(){
+				if(!this.paused) this.paused = true;
+			};
 
-	api.resume = function(){
-		if(!this.paused && !this.pending) return;
-		if(!this.pending) return;
-		this.paused = false;
-		this.deliver();
-	};
+			q.isPaused = function(){ return !!this.paused; };
 
-	api._manage = function(){
-		if(this.paused && this.clock){ clearTimeout(this.clock); delete this.clock; }
-		if(!this.queue.length){
-			this.pending = false; this.paused = false;
-			delete this.clock;
+			q.disable = function(){
+				if(this.active) this.active = false;
+			};
+
+			q.isDisabled = function(){ return !this.active; };
+
+			q.process = function(){
+				if(!this.flushed && !this.pending) return;
+
+				var self = this,
+					delay = util.isNumber(this.delay) && !util.isInfinit(this.delay) ? this.delay : 0,
+					curr = this.queue.shift();
+
+				return (this.timer = util.delay(function(){
+					self.process();
+				},delay));
+			};
+
+			return q;
 		}
-		return;
-	};
 
-	api.pause = function(){
-		if(this.paused || !this.pending) return;
-		this.paused = true;
-		return this._manage();
-	};
 
-	api.flush = function(){
-		var self = this;
-		if(!this.paused) util.explode(this.queue);
-		else setTimeout(function(){
-			self.queue = [];
-		},0);
-		self.pending = false;
-		return;
-	}
 
-	api.notify = function(channel,domain){
-		var channel = this.getChannel(channel),
-			domain = domain,
-			args = util.flatten(util.makeSplice(arguments,2,arguments.length));
+	q.deliver = function(){};
+	q.flush = function(){};
+	q.notify = function(){};
+	q.pause = function(){};
+	q.resume = function(){};
+	q.disable = function(){};
+	q.disabled = function(){};
 
-		if(!channel) return false;
-
-		if(this.immediate) channel.fire(domain,args);
-		else{
-			this.queue.push({ fn: function(channel,domain,args){
-				channel.fire(domain,args);
-			}, domain: domain, args: args, channel: channel });
-			if(!this.pending) this.pending = true;
-		};
-		
-		return this;
-	};
-
-	api.addChannel = function(key){
-		if(helper.exists.call(this.channels,key)) return false;
-
-		var channel = {
-			key:key, domains:{}
-		};
-
-		channel.fetch = util.proxy(domain.fetch,channel.domains);
-		channel.add = util.proxy(domain.add,channel.domains);
-		channel.exists = util.proxy(domain.exists,channel.domains);
-		channel.remove = util.proxy(domain.remove,channel.domains);
-		channel.modify = util.proxy(domain.modify,channel.domains);
-		channel.fire = function(key,args){
-			if(!channel.fetch(key)) return false;
-			// var key = key, args = util.makeSplice(arguments,1,arguments.length);
-			// args = util.flatten(args);
-			return channel.fetch(key).apply(null,args);
-		};
-
-		return helper.add.call(this.channels,key,channel);
-	};
-
-	api.getChannel = function(key){
-		return helper.fetch.call(this.channels,key);
-	};
-
-	api.removeChannel = function(key){
-		if(!helper.exists.call(this.channels,key)) return false;
-
-		helper.remove.call(this.channels,key);
-	};
-
-	api.sandbox = function(){
-		return {
-			notify: util.proxy(api.notify,api),
-			getChannel: util.proxy(api.getChannel,api),
-		};
-	};
-
-	return function(immediate,timeout){ 
-		var clone = util.clone(api,{});
-		clone.immediate = util.isBoolean(immediate) ? immediate : true;
-		clone.tick = (util.isNumber(timeout) ? timeout : 500 );
-		return clone;
+	return function(timeout){ 
 	};
 
 })(ToolStack);	
+
+//to ensure backward compatibility with calls to MessageAPI instead of MQ
+ToolStack.MessageAPI = ToolStack.MQ;
